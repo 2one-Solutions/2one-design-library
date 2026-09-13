@@ -4,8 +4,8 @@
   "generated_for": "0.2.0",
   "ontology": "graph/ontology.json",
   "stats": {
-    "nodes": 336,
-    "edges": 1029,
+    "nodes": 342,
+    "edges": 1035,
     "by_node_type": {
       "a11y": 8,
       "ai-component": 7,
@@ -16,7 +16,7 @@
       "component": 55,
       "context": 4,
       "contrast": 9,
-      "intent": 27,
+      "intent": 33,
       "pattern": 11,
       "package": 13,
       "token-radius": 7,
@@ -34,7 +34,7 @@
       "Component": 66,
       "Context": 4,
       "Evidence": 9,
-      "Intent": 27,
+      "Intent": 33,
       "Package": 13,
       "Foundation": 74,
       "Rule": 48,
@@ -57,7 +57,7 @@
       "preferred_composition": 46,
       "preferred_for": 6,
       "preferred_over": 2,
-      "realized_by": 24,
+      "realized_by": 30,
       "requires": 15,
       "serves": 5,
       "specializes": 6,
@@ -66,11 +66,11 @@
     },
     "by_provenance": {
       "nodes": {
-        "explicit": 129,
+        "explicit": 135,
         "derived": 207
       },
       "edges": {
-        "explicit": 312,
+        "explicit": 318,
         "derived": 717
       }
     },
@@ -1238,6 +1238,26 @@
       "source": "src/blocks/login-01.tsx"
     },
     {
+      "id": "intent:chart",
+      "type": "intent",
+      "class": "Intent",
+      "prov": "explicit",
+      "label": "Chart",
+      "description": "A chart or data visualisation.",
+      "source": "src/components/ui/chart.tsx",
+      "aliases": [
+        "chart",
+        "charts",
+        "graph",
+        "graphs",
+        "plot",
+        "visualization",
+        "visualisation",
+        "dataviz",
+        "trend"
+      ]
+    },
+    {
       "id": "intent:confirm-action",
       "type": "intent",
       "class": "Intent",
@@ -1245,6 +1265,45 @@
       "label": "Confirm an action",
       "description": "Ask the user to confirm before proceeding.",
       "source": "graph/decisions.json"
+    },
+    {
+      "id": "intent:dashboard",
+      "type": "intent",
+      "class": "Intent",
+      "prov": "explicit",
+      "label": "Dashboard",
+      "description": "An overview dashboard: KPI tiles, a data table and charts.",
+      "source": "src/blocks/dashboard-plain/page.tsx",
+      "aliases": [
+        "dashboard",
+        "overview",
+        "admin",
+        "support",
+        "analytics",
+        "reporting",
+        "home",
+        "app",
+        "console",
+        "panel"
+      ]
+    },
+    {
+      "id": "intent:data-table",
+      "type": "intent",
+      "class": "Intent",
+      "prov": "explicit",
+      "label": "Data table",
+      "description": "A sortable, selectable table of records.",
+      "source": "src/components/ui/table.tsx",
+      "aliases": [
+        "table",
+        "datatable",
+        "grid",
+        "records",
+        "rows",
+        "listing",
+        "spreadsheet"
+      ]
     },
     {
       "id": "intent:destructive-action",
@@ -1272,6 +1331,23 @@
       "label": "Hold the frame before first output",
       "description": "Keep the frame while the model has nothing to show yet.",
       "source": "src/ai-components/loading-state.tsx"
+    },
+    {
+      "id": "intent:login",
+      "type": "intent",
+      "class": "Intent",
+      "prov": "explicit",
+      "label": "Login",
+      "description": "A sign-in screen.",
+      "source": "src/blocks/login-01.tsx",
+      "aliases": [
+        "login",
+        "signin",
+        "log",
+        "authenticate",
+        "auth",
+        "session"
+      ]
     },
     {
       "id": "intent:low-emphasis-action",
@@ -1462,6 +1538,45 @@
       "label": "Signal the agent is working",
       "description": "Tell the user the agent is working right now, and on what.",
       "source": "src/ai-components/thinking-indicator.tsx"
+    },
+    {
+      "id": "intent:signup",
+      "type": "intent",
+      "class": "Intent",
+      "prov": "explicit",
+      "label": "Signup",
+      "description": "A create-account screen.",
+      "source": "src/blocks/signup-01.tsx",
+      "aliases": [
+        "signup",
+        "register",
+        "registration",
+        "join",
+        "onboard",
+        "create"
+      ]
+    },
+    {
+      "id": "intent:stat-tiles",
+      "type": "intent",
+      "class": "Intent",
+      "prov": "explicit",
+      "label": "Stat tiles / KPIs",
+      "description": "A row of KPI / metric tiles.",
+      "source": "src/blocks/dashboard-plain/section-cards.tsx",
+      "aliases": [
+        "kpi",
+        "kpis",
+        "metric",
+        "metrics",
+        "stat",
+        "stats",
+        "tile",
+        "tiles",
+        "cards",
+        "summary",
+        "scorecard"
+      ]
     },
     {
       "id": "intent:stream-answer",
@@ -8401,12 +8516,36 @@
       "evidence": "src/blocks/login-01.tsx"
     },
     {
+      "source": "intent:chart",
+      "target": "component:chart",
+      "type": "realized_by",
+      "prov": "explicit",
+      "priority": "PREFERRED",
+      "evidence": "src/components/ui/chart.tsx"
+    },
+    {
       "source": "intent:confirm-action",
       "target": "component:alert-dialog",
       "type": "realized_by",
       "prov": "explicit",
       "priority": "PREFERRED",
       "evidence": "src/components/ui/alert-dialog.tsx"
+    },
+    {
+      "source": "intent:dashboard",
+      "target": "block:dashboard-plain",
+      "type": "realized_by",
+      "prov": "explicit",
+      "priority": "PREFERRED",
+      "evidence": "src/blocks/dashboard-plain/page.tsx"
+    },
+    {
+      "source": "intent:data-table",
+      "target": "component:table",
+      "type": "realized_by",
+      "prov": "explicit",
+      "priority": "PREFERRED",
+      "evidence": "src/components/ui/table.tsx"
     },
     {
       "source": "intent:destructive-action",
@@ -8423,6 +8562,14 @@
       "prov": "explicit",
       "priority": "PREFERRED",
       "evidence": "src/ai-components/loading-state.tsx"
+    },
+    {
+      "source": "intent:login",
+      "target": "block:login-01",
+      "type": "realized_by",
+      "prov": "explicit",
+      "priority": "PREFERRED",
+      "evidence": "src/blocks/login-01.tsx"
     },
     {
       "source": "intent:low-emphasis-action",
@@ -8539,6 +8686,22 @@
       "prov": "explicit",
       "priority": "PREFERRED",
       "evidence": "src/ai-components/thinking-indicator.tsx"
+    },
+    {
+      "source": "intent:signup",
+      "target": "block:signup-01",
+      "type": "realized_by",
+      "prov": "explicit",
+      "priority": "PREFERRED",
+      "evidence": "src/blocks/signup-01.tsx"
+    },
+    {
+      "source": "intent:stat-tiles",
+      "target": "block:dashboard-plain",
+      "type": "realized_by",
+      "prov": "explicit",
+      "priority": "PREFERRED",
+      "evidence": "src/blocks/dashboard-plain/section-cards.tsx"
     },
     {
       "source": "intent:stream-answer",

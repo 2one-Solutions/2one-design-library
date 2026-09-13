@@ -37,7 +37,7 @@ const cases = [
     expect: (r) => r.decision === 'pattern:profile-header' },
 
   { name: 'unknown domain intent → no decision, but extension guidance (D3)',
-    run: () => decide(['decide', 'render a spreadsheet pivot table']),
+    run: () => decide(['decide', 'book a hotel room']),
     expect: (r) => !r.decision && /domain pack/.test(r.guidance || '') },
 
   { name: 'submit a form → form-submission pattern, composed with Input+Label+Primary Button',
