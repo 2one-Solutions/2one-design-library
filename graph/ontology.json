@@ -2,25 +2,104 @@
   "$schema": "./ontology.schema.json",
   "name": "2one Design System — graph ontology",
   "description": "The schema for the 2one knowledge graph. Defines the semantic node classes, the directional edge types (each with an allowed domain -> range and an unambiguous meaning), the decision-priority vocabulary, the provenance levels, and the conflict-resolution precedence ladder. build-graph.mjs validates every generated edge against this ontology; graph-decide.mjs reasons over it. Nothing here is derived — it is the authored contract.",
-
   "node_classes": {
-    "Foundation": { "purpose": "Canonical design values.", "node_types": ["token-color", "ramp", "token-radius", "token-type"] },
-    "Component":  { "purpose": "An implemented UI building block (Radix/shadcn primitive, a 2one-authored one, or a specific variant).", "node_types": ["component", "component-2one", "variant"] },
-    "Pattern":    { "purpose": "A composed, reusable solution: a template, chart, a named UX pattern, or a component for an AI interface (a single AI-product state).", "node_types": ["template-block", "template-chart", "pattern", "ai-component"] },
-    "Rule":       { "purpose": "A first-class design/UX law: constraint, guideline, or anti-pattern.", "node_types": ["rule"] },
-    "Intent":     { "purpose": "A user goal / UX intent the system reasons from (e.g. submit a form).", "node_types": ["intent"] },
-    "Context":    { "purpose": "A situation or platform that conditions a decision (mobile, confirmation flow).", "node_types": ["context"] },
-    "State":      { "purpose": "An interaction state a component can express (loading, error, selected).", "node_types": ["state"] },
-    "AccessibilityRequirement": { "purpose": "An a11y obligation a component or pattern must satisfy.", "node_types": ["a11y"] },
-    "Brand":      { "purpose": "Brand identity: mission, voice, tone, personas.", "node_types": ["brand", "persona"] },
-    "Evidence":   { "purpose": "A checkable fact that supports a decision (e.g. an APCA contrast measurement).", "node_types": ["contrast"] },
-    "Package":    { "purpose": "An external npm dependency a component pulls in.", "node_types": ["package"] }
+    "Foundation": {
+      "purpose": "Canonical design values.",
+      "node_types": [
+        "token-color",
+        "ramp",
+        "token-radius",
+        "token-type"
+      ]
+    },
+    "Component": {
+      "purpose": "An implemented UI building block (Radix/shadcn primitive, a 2one-authored one, or a specific variant).",
+      "node_types": [
+        "component",
+        "component-2one",
+        "variant"
+      ]
+    },
+    "Pattern": {
+      "purpose": "A composed, reusable solution: a template, chart, a named UX pattern, or a component for an AI interface (a single AI-product state).",
+      "node_types": [
+        "template-block",
+        "template-chart",
+        "pattern",
+        "ai-component"
+      ]
+    },
+    "Rule": {
+      "purpose": "A first-class design/UX law: constraint, guideline, or anti-pattern.",
+      "node_types": [
+        "rule"
+      ]
+    },
+    "Intent": {
+      "purpose": "A user goal / UX intent the system reasons from (e.g. submit a form).",
+      "node_types": [
+        "intent"
+      ]
+    },
+    "Context": {
+      "purpose": "A situation or platform that conditions a decision (mobile, confirmation flow).",
+      "node_types": [
+        "context"
+      ]
+    },
+    "State": {
+      "purpose": "An interaction state a component can express (loading, error, selected).",
+      "node_types": [
+        "state"
+      ]
+    },
+    "AccessibilityRequirement": {
+      "purpose": "An a11y obligation a component or pattern must satisfy.",
+      "node_types": [
+        "a11y"
+      ]
+    },
+    "Brand": {
+      "purpose": "Brand identity: mission, voice, tone, personas.",
+      "node_types": [
+        "brand",
+        "persona"
+      ]
+    },
+    "Evidence": {
+      "purpose": "A checkable fact that supports a decision (e.g. an APCA contrast measurement).",
+      "node_types": [
+        "contrast"
+      ]
+    },
+    "Package": {
+      "purpose": "An external npm dependency a component pulls in.",
+      "node_types": [
+        "package"
+      ]
+    },
+    "Guide": {
+      "purpose": "An end-to-end build recipe (a guide that composes components/patterns into a whole surface).",
+      "node_types": [
+        "recipe"
+      ]
+    }
   },
-
-  "rule_kinds": ["constraint", "guideline", "antipattern"],
-
+  "rule_kinds": [
+    "constraint",
+    "guideline",
+    "antipattern"
+  ],
   "priority": {
-    "order": ["MANDATORY", "PREFERRED", "RECOMMENDED", "ALLOWED", "ALTERNATIVE", "AVOID", "FORBIDDEN"],
+    "order": [
+      "MANDATORY",
+      "PREFERRED",
+      "RECOMMENDED",
+      "ALLOWED",
+      "ALTERNATIVE",
+      "AVOID",
+      "FORBIDDEN"
+    ],
     "meaning": {
       "MANDATORY": "Must hold. A UI that breaks it is invalid.",
       "PREFERRED": "The default choice unless a higher rule or explicit context overrides.",
@@ -31,58 +110,372 @@
       "FORBIDDEN": "Must never hold. A UI that does it is invalid."
     }
   },
-
   "provenance": {
-    "levels": ["explicit", "derived", "inferred"],
-    "authority_order": ["explicit", "derived", "inferred"],
+    "levels": [
+      "explicit",
+      "derived",
+      "inferred"
+    ],
+    "authority_order": [
+      "explicit",
+      "derived",
+      "inferred"
+    ],
     "meaning": {
       "explicit": "Authored directly in a source rule, doc, or component metadata (graph/decisions.json, docs/*, brand.json).",
       "derived": "Parsed deterministically from repository source (component/token/template files).",
       "inferred": "Heuristically concluded; never authoritative on its own."
     }
   },
-
   "conflict_precedence": {
     "description": "When two rules conflict, the category earlier in this ladder wins (tier 1 strongest); within a category the higher severity wins (forbidden > must > should > may > avoid). This mirrors rules/ux-rules.json precedence — the authoritative source — with AI preference appended as the weakest. An AI agent MUST resolve conflicts by this ladder, never by guessing. Accessibility is never traded away for brand or aesthetics.",
-    "severity_order": ["forbidden", "must", "should", "may", "avoid"],
+    "severity_order": [
+      "forbidden",
+      "must",
+      "should",
+      "may",
+      "avoid"
+    ],
     "ladder": [
-      { "tier": 1, "id": "accessibility", "label": "Accessibility & safety (WCAG + APCA, keyboard, focus)" },
-      { "tier": 2, "id": "brand", "label": "2one brand identity" },
-      { "tier": 3, "id": "consistency", "label": "System consistency" },
-      { "tier": 4, "id": "interaction", "label": "Interaction / UX behaviour" },
-      { "tier": 5, "id": "layout", "label": "Layout" },
-      { "tier": 6, "id": "implementation", "label": "Implementation detail" },
-      { "tier": 7, "id": "ai", "label": "AI preference (weakest)" }
+      {
+        "tier": 1,
+        "id": "accessibility",
+        "label": "Accessibility & safety (WCAG + APCA, keyboard, focus)"
+      },
+      {
+        "tier": 2,
+        "id": "brand",
+        "label": "2one brand identity"
+      },
+      {
+        "tier": 3,
+        "id": "consistency",
+        "label": "System consistency"
+      },
+      {
+        "tier": 4,
+        "id": "interaction",
+        "label": "Interaction / UX behaviour"
+      },
+      {
+        "tier": 5,
+        "id": "layout",
+        "label": "Layout"
+      },
+      {
+        "tier": 6,
+        "id": "implementation",
+        "label": "Implementation detail"
+      },
+      {
+        "tier": 7,
+        "id": "ai",
+        "label": "AI preference (weakest)"
+      }
     ]
   },
-
   "edge_types": {
-    "composed_of":    { "category": "structural", "directional": true, "meaning": "source is built from target.", "domain": ["Component", "Pattern"], "range": ["Component", "Foundation"] },
-    "uses":           { "category": "structural", "directional": true, "meaning": "source (a template) renders target.", "domain": ["Pattern"], "range": ["Component"] },
-    "derived_from":   { "category": "structural", "directional": true, "meaning": "source token takes its value from target ramp step.", "domain": ["Foundation"], "range": ["Foundation"] },
-    "depends_on":     { "category": "structural", "directional": true, "meaning": "source component imports target npm package.", "domain": ["Component"], "range": ["Package"] },
-    "has_contrast":   { "category": "structural", "directional": true, "meaning": "source token participates in target contrast fact.", "domain": ["Foundation"], "range": ["Evidence"] },
-    "serves":         { "category": "structural", "directional": true, "meaning": "source (mission) serves target persona.", "domain": ["Brand"], "range": ["Brand"] },
-    "embodies":       { "category": "structural", "directional": true, "meaning": "source (voice) is expressed by target rule.", "domain": ["Brand"], "range": ["Rule"] },
-
-    "governed_by":    { "category": "governance", "directional": true, "meaning": "source must obey target rule.", "domain": ["Component", "Pattern", "Foundation"], "range": ["Rule"] },
-    "applies_to":     { "category": "governance", "directional": true, "meaning": "source rule constrains target.", "domain": ["Rule"], "range": ["Component", "Pattern", "Foundation", "Intent", "Context"] },
-    "applies_when":   { "category": "governance", "directional": true, "meaning": "source rule/decision is active only in target context.", "domain": ["Rule"], "range": ["Context"] },
-    "overrides":      { "category": "governance", "directional": true, "meaning": "source rule takes precedence over target rule.", "domain": ["Rule"], "range": ["Rule"] },
-    "conflicts_with": { "category": "governance", "directional": true, "meaning": "source rule can conflict with target rule (resolve by tier).", "domain": ["Rule"], "range": ["Rule"] },
-
-    "realized_by":    { "category": "decision", "directional": true, "meaning": "the target pattern/component is the preferred realisation of the source intent.", "domain": ["Intent"], "range": ["Pattern", "Component"] },
-    "appropriate_for":   { "category": "decision", "directional": true, "meaning": "source is a valid choice for target intent/context.", "domain": ["Component", "Pattern"], "range": ["Intent", "Context"] },
-    "inappropriate_for": { "category": "decision", "directional": true, "meaning": "source must NOT be used for target intent/context.", "domain": ["Component", "Pattern"], "range": ["Intent", "Context"] },
-    "preferred_for":  { "category": "decision", "directional": true, "meaning": "source is the PREFERRED choice for target intent (over alternatives).", "domain": ["Component", "Pattern"], "range": ["Intent"] },
-    "preferred_over": { "category": "decision", "directional": true, "meaning": "source is preferred over target for the same job.", "domain": ["Component", "Pattern"], "range": ["Component", "Pattern"] },
-    "alternative_to": { "category": "decision", "directional": true, "meaning": "source is a valid secondary option to target.", "domain": ["Component", "Pattern"], "range": ["Component", "Pattern"] },
-    "forbidden_with": { "category": "decision", "directional": true, "meaning": "source must never be composed with target.", "domain": ["Component", "Pattern"], "range": ["Component", "Pattern"] },
-    "requires":       { "category": "decision", "directional": true, "meaning": "source must satisfy target a11y requirement (or include target component).", "domain": ["Component", "Pattern"], "range": ["AccessibilityRequirement", "Component"] },
-    "recommends":     { "category": "decision", "directional": true, "meaning": "source recommends composing with target.", "domain": ["Component", "Pattern"], "range": ["Component"] },
-    "supports_state": { "category": "decision", "directional": true, "meaning": "source component can express target interaction state.", "domain": ["Component"], "range": ["State"] },
-    "preferred_composition": { "category": "decision", "directional": true, "meaning": "source pattern's preferred make-up includes target.", "domain": ["Pattern"], "range": ["Component"] },
-    "demonstrates":   { "category": "decision", "directional": true, "meaning": "source template is a worked example of target pattern/rule.", "domain": ["Pattern"], "range": ["Pattern", "Rule", "Intent"] },
-    "specializes":    { "category": "decision", "directional": true, "meaning": "source is a more specific variant of target.", "domain": ["Component", "Pattern"], "range": ["Component", "Pattern"] }
+    "composed_of": {
+      "category": "structural",
+      "directional": true,
+      "meaning": "source is built from target.",
+      "domain": [
+        "Component",
+        "Pattern"
+      ],
+      "range": [
+        "Component",
+        "Foundation"
+      ]
+    },
+    "uses": {
+      "category": "structural",
+      "directional": true,
+      "meaning": "source (a template) renders target.",
+      "domain": [
+        "Pattern"
+      ],
+      "range": [
+        "Component"
+      ]
+    },
+    "derived_from": {
+      "category": "structural",
+      "directional": true,
+      "meaning": "source token takes its value from target ramp step.",
+      "domain": [
+        "Foundation"
+      ],
+      "range": [
+        "Foundation"
+      ]
+    },
+    "depends_on": {
+      "category": "structural",
+      "directional": true,
+      "meaning": "source component imports target npm package.",
+      "domain": [
+        "Component"
+      ],
+      "range": [
+        "Package"
+      ]
+    },
+    "has_contrast": {
+      "category": "structural",
+      "directional": true,
+      "meaning": "source token participates in target contrast fact.",
+      "domain": [
+        "Foundation"
+      ],
+      "range": [
+        "Evidence"
+      ]
+    },
+    "serves": {
+      "category": "structural",
+      "directional": true,
+      "meaning": "source (mission) serves target persona.",
+      "domain": [
+        "Brand"
+      ],
+      "range": [
+        "Brand"
+      ]
+    },
+    "embodies": {
+      "category": "structural",
+      "directional": true,
+      "meaning": "source (voice) is expressed by target rule.",
+      "domain": [
+        "Brand"
+      ],
+      "range": [
+        "Rule"
+      ]
+    },
+    "governed_by": {
+      "category": "governance",
+      "directional": true,
+      "meaning": "source must obey target rule.",
+      "domain": [
+        "Component",
+        "Pattern",
+        "Foundation"
+      ],
+      "range": [
+        "Rule"
+      ]
+    },
+    "applies_to": {
+      "category": "governance",
+      "directional": true,
+      "meaning": "source rule constrains target.",
+      "domain": [
+        "Rule"
+      ],
+      "range": [
+        "Component",
+        "Pattern",
+        "Foundation",
+        "Intent",
+        "Context"
+      ]
+    },
+    "applies_when": {
+      "category": "governance",
+      "directional": true,
+      "meaning": "source rule/decision is active only in target context.",
+      "domain": [
+        "Rule"
+      ],
+      "range": [
+        "Context"
+      ]
+    },
+    "overrides": {
+      "category": "governance",
+      "directional": true,
+      "meaning": "source rule takes precedence over target rule.",
+      "domain": [
+        "Rule"
+      ],
+      "range": [
+        "Rule"
+      ]
+    },
+    "conflicts_with": {
+      "category": "governance",
+      "directional": true,
+      "meaning": "source rule can conflict with target rule (resolve by tier).",
+      "domain": [
+        "Rule"
+      ],
+      "range": [
+        "Rule"
+      ]
+    },
+    "realized_by": {
+      "category": "decision",
+      "directional": true,
+      "meaning": "the target pattern/component is the preferred realisation of the source intent.",
+      "domain": [
+        "Intent"
+      ],
+      "range": [
+        "Pattern",
+        "Component"
+      ]
+    },
+    "appropriate_for": {
+      "category": "decision",
+      "directional": true,
+      "meaning": "source is a valid choice for target intent/context.",
+      "domain": [
+        "Component",
+        "Pattern"
+      ],
+      "range": [
+        "Intent",
+        "Context"
+      ]
+    },
+    "inappropriate_for": {
+      "category": "decision",
+      "directional": true,
+      "meaning": "source must NOT be used for target intent/context.",
+      "domain": [
+        "Component",
+        "Pattern"
+      ],
+      "range": [
+        "Intent",
+        "Context"
+      ]
+    },
+    "preferred_for": {
+      "category": "decision",
+      "directional": true,
+      "meaning": "source is the PREFERRED choice for target intent (over alternatives).",
+      "domain": [
+        "Component",
+        "Pattern"
+      ],
+      "range": [
+        "Intent"
+      ]
+    },
+    "preferred_over": {
+      "category": "decision",
+      "directional": true,
+      "meaning": "source is preferred over target for the same job.",
+      "domain": [
+        "Component",
+        "Pattern"
+      ],
+      "range": [
+        "Component",
+        "Pattern"
+      ]
+    },
+    "alternative_to": {
+      "category": "decision",
+      "directional": true,
+      "meaning": "source is a valid secondary option to target.",
+      "domain": [
+        "Component",
+        "Pattern"
+      ],
+      "range": [
+        "Component",
+        "Pattern"
+      ]
+    },
+    "forbidden_with": {
+      "category": "decision",
+      "directional": true,
+      "meaning": "source must never be composed with target.",
+      "domain": [
+        "Component",
+        "Pattern"
+      ],
+      "range": [
+        "Component",
+        "Pattern"
+      ]
+    },
+    "requires": {
+      "category": "decision",
+      "directional": true,
+      "meaning": "source must satisfy target a11y requirement (or include target component).",
+      "domain": [
+        "Component",
+        "Pattern"
+      ],
+      "range": [
+        "AccessibilityRequirement",
+        "Component"
+      ]
+    },
+    "recommends": {
+      "category": "decision",
+      "directional": true,
+      "meaning": "source recommends composing with target.",
+      "domain": [
+        "Component",
+        "Pattern"
+      ],
+      "range": [
+        "Component"
+      ]
+    },
+    "supports_state": {
+      "category": "decision",
+      "directional": true,
+      "meaning": "source component can express target interaction state.",
+      "domain": [
+        "Component"
+      ],
+      "range": [
+        "State"
+      ]
+    },
+    "preferred_composition": {
+      "category": "decision",
+      "directional": true,
+      "meaning": "source pattern's preferred make-up includes target.",
+      "domain": [
+        "Pattern"
+      ],
+      "range": [
+        "Component"
+      ]
+    },
+    "demonstrates": {
+      "category": "decision",
+      "directional": true,
+      "meaning": "source template is a worked example of target pattern/rule.",
+      "domain": [
+        "Pattern"
+      ],
+      "range": [
+        "Pattern",
+        "Rule",
+        "Intent"
+      ]
+    },
+    "specializes": {
+      "category": "decision",
+      "directional": true,
+      "meaning": "source is a more specific variant of target.",
+      "domain": [
+        "Component",
+        "Pattern"
+      ],
+      "range": [
+        "Component",
+        "Pattern"
+      ]
+    }
   }
 }

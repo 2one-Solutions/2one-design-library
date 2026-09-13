@@ -102,7 +102,7 @@
       "Button: rounded-full (pill) instead of shadcn's rounded-md — the 2one signature, applied by an unlayered [data-slot=\"button\"] rule so `shadcn add` cannot regress it."
     ],
     "not_covered": [
-      "Combobox / Date Picker / Data Table / Typography are shadcn composition patterns, not single components — build them from the primitives.",
+      "Combobox / Date Picker / Typography are shadcn composition patterns, not single components — build them from the primitives.",
       "Toast ships as sonner."
     ],
     "history": "Replaced the earlier hand-built Figma-1:1 set (12 components) with this shadcn-based system on user direction (2026-08-10). The old components were removed."

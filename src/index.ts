@@ -71,6 +71,8 @@ export * from './components/app-bar'
 export * from './components/bottom-nav-item'
 export * from './components/media-placeholder'
 export * from './components/theme-toggle'
+export * from './components/stat-tile'
+export * from './components/data-table'
 
 // Tier-3 page patterns — importable compositions. For a lean import that skips the
 // rest of the barrel, use the subpath: '@2one/design-library/patterns/app-shell'.

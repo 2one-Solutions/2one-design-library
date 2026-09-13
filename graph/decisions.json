@@ -1638,17 +1638,17 @@
     },
     {
       "source": "intent:stat-tiles",
-      "target": "block:dashboard-plain",
+      "target": "component-2one:stat-tile",
       "type": "realized_by",
       "priority": "PREFERRED",
-      "source_ref": "src/blocks/dashboard-plain/section-cards.tsx"
+      "source_ref": "src/components/stat-tile.tsx"
     },
     {
       "source": "intent:data-table",
-      "target": "component:table",
+      "target": "component-2one:data-table",
       "type": "realized_by",
       "priority": "PREFERRED",
-      "source_ref": "src/components/ui/table.tsx"
+      "source_ref": "src/components/data-table.tsx"
     },
     {
       "source": "intent:chart",
