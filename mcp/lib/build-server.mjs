@@ -56,6 +56,30 @@ export function makeServer() {
     async ({ id }) => asText(dls.getPattern(id)),
   )
   server.tool(
+    'get_block',
+    'Get a 2one block (a ready section to compose from: marketing sections like "marketing-hero", auth like "login-01"/"signup-01", or "dashboard-plain") — its spec + source code. Use these instead of hand-building sections.',
+    { name: z.string() },
+    async ({ name }) => asText(dls.getBlock(name)),
+  )
+  server.tool(
+    'get_ai_component',
+    'Get a 2one AI-interface component (e.g. "streaming-text", "reasoning-panel", "guardrail-notice", "typing-indicator") — its node, machine spec, and source. Use for AI/agent UIs.',
+    { name: z.string() },
+    async ({ name }) => asText(dls.getAiComponent(name)),
+  )
+  server.tool(
+    'get_doc',
+    'Read a 2one guidance doc (e.g. "web-writing", "consuming", "accessibility", "building-with-the-dls", "placeholders"). Call with no name to list all docs. Read the relevant doc before building the matching surface.',
+    { name: z.string().optional() },
+    async ({ name }) => asText(dls.getDoc(name)),
+  )
+  server.tool(
+    'get_skill',
+    'Get the 2one skill — WRONG vs RIGHT code examples per rule area (e.g. "brand", "composition", "forms"). Call with no rule to list them. Use these to see the correct pattern, not just the rule.',
+    { rule: z.string().optional() },
+    async ({ rule }) => asText(dls.getSkill(rule)),
+  )
+  server.tool(
     'get_tokens',
     'Call this before writing any UI so every colour, spacing, and type value comes from the 2one tokens — never invent or hardcode a colour or size.',
     {},

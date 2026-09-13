@@ -85,6 +85,62 @@ export function getPattern(id) {
   return node ?? { error: `No pattern "${id}". Known patterns live in rules/patterns/.` }
 }
 
+const readText = (rel) => readFileSync(join(REPO_ROOT, rel), 'utf8')
+
+/** A block (marketing section, login/signup, dashboard) — spec + source. */
+export function getBlock(name) {
+  const g = getGraph()
+  const node = g.nodes.find((n) => n.id === `block:${name}`)
+  if (!node) return { error: `No block "${name}". Use search or list_blocks.` }
+  const label = node.label || name // e.g. "marketing/hero", "login-01"
+  const candidates = [`src/blocks/${label}.tsx`, `src/blocks/${label}/page.tsx`]
+  const rel = candidates.find((c) => existsSync(join(REPO_ROOT, c)))
+  return {
+    id: node.id,
+    label,
+    path: rel ?? null,
+    composes: g.edges
+      .filter((e) => (e.source || e.s) === node.id && e.type === 'composed_of')
+      .map((e) => (e.target || e.t)),
+    code: rel ? readText(rel) : null,
+  }
+}
+
+/** An AI-interface component (streaming-text, reasoning-panel, …) — node + spec + source. */
+export function getAiComponent(name) {
+  const node = getGraph().nodes.find((n) => n.id === `ai-component:${name}`)
+  const specPath = `rules/ai-components/${name}.json`
+  const hasSpec = existsSync(join(REPO_ROOT, specPath))
+  if (!node && !hasSpec) return { error: `No ai-component "${name}".` }
+  return {
+    id: node?.id ?? `ai-component:${name}`,
+    label: node?.label ?? name,
+    description: node?.description ?? null,
+    spec: hasSpec ? JSON.parse(readText(specPath)) : null,
+    code: node?.source && existsSync(join(REPO_ROOT, node.source)) ? readText(node.source) : null,
+  }
+}
+
+/** A guidance doc (web-writing, consuming, accessibility, …). No name → list them. */
+export function getDoc(name) {
+  const docs = docList()
+  if (!name) return { docs }
+  const file = name.endsWith('.md') ? name : `${name}.md`
+  if (!docs.includes(file)) return { error: `No doc "${name}". Available: ${docs.join(', ')}` }
+  return { name: file, content: readText(`docs/${file}`) }
+}
+
+/** The 2one skill (wrong/right code per rule). No rule → overview + list. */
+export function getSkill(rule) {
+  const rulesDir = join(REPO_ROOT, 'skills/2one-dls/rules')
+  const available = existsSync(rulesDir) ? readdirSync(rulesDir).filter((f) => f.endsWith('.md')).map((f) => f.replace('.md', '')) : []
+  if (!rule) {
+    return { overview: existsSync(join(REPO_ROOT, 'skills/2one-dls/SKILL.md')) ? readText('skills/2one-dls/SKILL.md') : null, rules: available }
+  }
+  if (!available.includes(rule)) return { error: `No skill "${rule}". Available: ${available.join(', ')}` }
+  return { rule, content: readText(`skills/2one-dls/rules/${rule}.md`) }
+}
+
 export function search(query, limit = 20) {
   const q = String(query).toLowerCase()
   return getGraph()

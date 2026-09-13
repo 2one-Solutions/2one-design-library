@@ -52,6 +52,10 @@ Restart Claude, then ask e.g. *"Using 2one, what should I build for a pricing pa
 | `search(query)` | search the knowledge graph | `graph.json` |
 | `get_component(name)` | a component + the rules that govern it | `graph.json` |
 | `get_pattern(id)` | a page-pattern spec | `rules/patterns/*.json` |
+| `get_block(name)` | a ready section (marketing/login/signup/dashboard) + code | `src/blocks/**` |
+| `get_ai_component(name)` | an AI-interface component spec + code | `rules/ai-components/*` + `src/ai-components/*` |
+| `get_doc(name?)` | a guidance doc (web-writing, consuming, a11y…); no name lists them | `docs/*.md` |
+| `get_skill(rule?)` | wrong-vs-right code per rule area (brand/composition/forms) | `skills/2one-dls/` |
 | `get_tokens()` | colours, spacing, typography | `tokens/*.json` |
 | `check(code)` | audit a snippet against the rules | `npx 2one check` |
 | `what_uses(query)` | impact analysis before a change | `scripts/what-uses.mjs` |
