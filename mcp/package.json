@@ -1,0 +1,22 @@
+{
+  "name": "@2one/mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "2one Design Language System — MCP server. Exposes the DLS (decide, check, tokens, components, patterns, brand) as tools + resources so any MCP client (Claude) builds from the system without pasting a prompt.",
+  "bin": {
+    "2one-mcp": "./server.mjs"
+  },
+  "scripts": {
+    "start": "node server.mjs",
+    "smoke": "node smoke.mjs",
+    "inspect": "npx @modelcontextprotocol/inspector node server.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "zod": "^3.23.8"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
