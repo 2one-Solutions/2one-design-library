@@ -61,11 +61,39 @@ Restart Claude, then ask e.g. *"Using 2one, what should I build for a pricing pa
 
 Resources: `dls://manifest`, `dls://rules`, `dls://tokens`.
 
+## Remote (Phase 2 — connect by URL)
+
+The same tools over **Streamable HTTP**, so anyone connects to a URL instead of a local path.
+
+**Run the HTTP server locally**
+```bash
+npm --prefix mcp run start:http           # → http://localhost:8787/mcp
+npm --prefix mcp run smoke:http           # verifies the HTTP transport end-to-end
+# require a token:  set MCP_TOKEN=secret before start:http
+```
+
+**Deploy (Docker → Render, ~$7/mo)**
+```bash
+docker build -f mcp/Dockerfile -t 2one-mcp .     # context = repo root
+docker run -p 8787:8787 -e MCP_TOKEN=secret 2one-mcp
+```
+Or use `mcp/render.yaml` (Render → New → Blueprint). Endpoint: `https://<service>.onrender.com/mcp`.
+
+**Connect a client to the URL**
+```bash
+claude mcp add --transport http 2one-dls https://<host>/mcp   # + header if MCP_TOKEN is set
+```
+Claude Desktop / claude.ai / Cursor: add a **custom connector** with the `/mcp` URL.
+
+**Auth:** `MCP_TOKEN` sets a shared **bearer token** (good for trusted clients + the Inspector).
+Full **OAuth** — which claude.ai custom connectors expect for public use — is the next
+sub-phase; until then, deploy behind the token (or an unguessable URL for testing).
+
 ## Notes
 
-- **Phase 0** shells out to the repo's own scripts, so answers never drift from `npm run` /
-  `npx 2one`. It must run inside a checkout of the DLS repo (it reads the sibling
-  `manifest.json`, `graph.json`, `tokens/`, `rules/`, `scripts/`).
-- **Next (Phase 2):** an in-process port (bundle the JSON, no `child_process`) so it can be
-  hosted remotely on Cloudflare Workers with OAuth — then teams connect over a URL instead
-  of a local path. See the productization notes.
+- **Phase 0/2 both shell out** to the repo's own scripts, so answers never drift from
+  `npm run` / `npx 2one`. The server (stdio or HTTP) must run where it can read the sibling
+  `manifest.json`, `graph.json`, `tokens/`, `rules/`, `scripts/` — locally that's the repo
+  checkout; in Docker the repo is copied into the image.
+- **Later (edge):** an in-process port (bundle the JSON, drop `child_process`) would let it
+  run on Cloudflare Workers. Not needed for Render/Docker, which run full Node.

@@ -1,0 +1,13 @@
+# Keep the MCP image lean — exclude everything the server doesn't need at runtime.
+.git
+node_modules
+mcp/node_modules
+dist
+dist-site
+dist-origin
+tests/visual/__screenshots__
+playwright-report
+test-results
+dev
+origin
+metrics

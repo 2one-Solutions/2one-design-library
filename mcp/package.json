@@ -9,11 +9,14 @@
   },
   "scripts": {
     "start": "node server.mjs",
+    "start:http": "node server-http.mjs",
     "smoke": "node smoke.mjs",
+    "smoke:http": "node smoke-http.mjs",
     "inspect": "npx @modelcontextprotocol/inspector node server.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
+    "express": "^4.21.2",
     "zod": "^3.23.8"
   },
   "engines": {
