@@ -314,6 +314,22 @@
           "onboard",
           "create"
         ]
+      },
+      {
+        "id": "intent:home",
+        "label": "Home page",
+        "description": "A marketing home / landing page — the site shell with hero and sections.",
+        "source": "src/patterns/marketing-site.tsx",
+        "aliases": [
+          "home",
+          "homepage",
+          "landing",
+          "marketing",
+          "website",
+          "front",
+          "hero",
+          "site"
+        ]
       }
     ],
     "context": [
@@ -1670,6 +1686,13 @@
       "type": "realized_by",
       "priority": "PREFERRED",
       "source_ref": "src/blocks/signup-01.tsx"
+    },
+    {
+      "source": "intent:home",
+      "target": "pattern:marketing-site",
+      "type": "realized_by",
+      "priority": "PREFERRED",
+      "source_ref": "src/patterns/marketing-site.tsx"
     }
   ]
 }

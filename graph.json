@@ -4,8 +4,8 @@
   "generated_for": "0.2.0",
   "ontology": "graph/ontology.json",
   "stats": {
-    "nodes": 349,
-    "edges": 1046,
+    "nodes": 350,
+    "edges": 1047,
     "by_node_type": {
       "a11y": 8,
       "ai-component": 7,
@@ -16,7 +16,7 @@
       "component": 55,
       "context": 4,
       "contrast": 9,
-      "intent": 33,
+      "intent": 34,
       "pattern": 11,
       "package": 14,
       "token-radius": 7,
@@ -35,7 +35,7 @@
       "Component": 68,
       "Context": 4,
       "Evidence": 9,
-      "Intent": 33,
+      "Intent": 34,
       "Package": 14,
       "Foundation": 74,
       "Guide": 4,
@@ -59,7 +59,7 @@
       "preferred_composition": 46,
       "preferred_for": 6,
       "preferred_over": 2,
-      "realized_by": 30,
+      "realized_by": 31,
       "requires": 15,
       "serves": 5,
       "specializes": 6,
@@ -68,11 +68,11 @@
     },
     "by_provenance": {
       "nodes": {
-        "explicit": 139,
+        "explicit": 140,
         "derived": 210
       },
       "edges": {
-        "explicit": 318,
+        "explicit": 319,
         "derived": 728
       }
     },
@@ -1349,6 +1349,25 @@
       "label": "Hold the frame before first output",
       "description": "Keep the frame while the model has nothing to show yet.",
       "source": "src/ai-components/loading-state.tsx"
+    },
+    {
+      "id": "intent:home",
+      "type": "intent",
+      "class": "Intent",
+      "prov": "explicit",
+      "label": "Home page",
+      "description": "A marketing home / landing page — the site shell with hero and sections.",
+      "source": "src/patterns/marketing-site.tsx",
+      "aliases": [
+        "home",
+        "homepage",
+        "landing",
+        "marketing",
+        "website",
+        "front",
+        "hero",
+        "site"
+      ]
     },
     {
       "id": "intent:login",
@@ -8685,6 +8704,14 @@
       "prov": "explicit",
       "priority": "PREFERRED",
       "evidence": "src/ai-components/loading-state.tsx"
+    },
+    {
+      "source": "intent:home",
+      "target": "pattern:marketing-site",
+      "type": "realized_by",
+      "prov": "explicit",
+      "priority": "PREFERRED",
+      "evidence": "src/patterns/marketing-site.tsx"
     },
     {
       "source": "intent:login",
