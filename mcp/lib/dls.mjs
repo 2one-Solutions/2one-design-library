@@ -9,7 +9,7 @@
   (Phase 2 / edge hosting would replace the shell-outs with in-process ports; kept
   as shell-outs here on purpose — zero reimplementation, guaranteed-faithful.)
 */
-import { readFileSync, writeFileSync, rmSync, existsSync, readdirSync } from 'node:fs'
+import { readFileSync, writeFileSync, rmSync, existsSync, readdirSync, statSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { spawnSync } from 'node:child_process'
@@ -66,16 +66,66 @@ export function check(code, ext = 'tsx') {
 }
 
 // ---- in-repo lookups -------------------------------------------------------
+/** Parse cva variant groups (variant/size/…) → their options, from component source. */
+function parseVariants(code) {
+  const out = {}
+  const m = code.match(/cva\([\s\S]*?variants:\s*\{([\s\S]*?)\n\s{4}\}/)
+  const body = m ? m[1] : ''
+  const groupRe = /(\w+):\s*\{([\s\S]*?)\n\s{6}\}/g
+  let g
+  while ((g = groupRe.exec(body))) {
+    const opts = [...g[2].matchAll(/^\s{8}["']?([\w-]+)["']?:/gm)].map((x) => x[1])
+    if (opts.length) out[g[1]] = opts
+  }
+  const def = code.match(/defaultVariants:\s*\{([\s\S]*?)\}/)
+  return { groups: out, defaults: def ? Object.fromEntries([...def[1].matchAll(/(\w+):\s*["']([\w-]+)["']/g)].map((x) => [x[1], x[2]])) : {} }
+}
+
+/** Package import paths for a component from its source path. */
+function importPaths(path, exportName) {
+  const sub = path ? path.replace(/^src\//, '').replace(/\.tsx?$/, '') : null
+  return {
+    barrel: `import { ${exportName} } from '@2one/design-library'`,
+    subpath: sub ? `import { ${exportName} } from '@2one/design-library/${sub}'` : null,
+  }
+}
+
 export function getComponent(name) {
   const g = getGraph()
   const node = g.nodes.find((n) => n.id === `component:${name}` || n.id === `component-2one:${name}`)
   if (!node) return { error: `No component "${name}". Try the search tool.` }
-  // The rules that govern it (governed_by edges run component → rule:X).
   const governedBy = g.edges
     .filter((e) => (e.source || e.s) === node.id && e.type === 'governed_by')
     .map((e) => (e.target || e.t || '').replace('rule:', ''))
     .filter(Boolean)
-  return { name, id: node.id, label: node.label, path: node.path ?? null, tier: node.tier ?? null, governed_by: governedBy }
+
+  const exportName = node.label || name
+  const path = node.path ?? null
+  let variants = { groups: {}, defaults: {} }
+  let props = []
+  if (path && existsSync(join(REPO_ROOT, path))) {
+    const code = readText(path)
+    variants = parseVariants(code)
+    // exported prop-type member names (best-effort: the component's *Props interface).
+    const pi = code.match(new RegExp(`interface\\s+\\w*Props[^{]*\\{([\\s\\S]*?)\\n\\}`))
+    if (pi) props = [...pi[1].matchAll(/^\s*(\w+)\??:/gm)].map((x) => x[1])
+  }
+  const opt = (grp) => (variants.groups[grp] ? ` ${grp}="${variants.groups[grp].find((o) => o !== variants.defaults[grp]) || variants.groups[grp][0]}"` : '')
+  const example = `<${exportName}${variants.groups.variant ? opt('variant') : ''}>${exportName}</${exportName}>`
+
+  return {
+    name,
+    id: node.id,
+    label: exportName,
+    path,
+    tier: node.tier ?? null,
+    governed_by: governedBy,
+    import: importPaths(path, exportName),
+    variants: variants.groups,
+    variant_defaults: variants.defaults,
+    props,
+    example,
+  }
 }
 
 export function getPattern(id) {
@@ -87,22 +137,60 @@ export function getPattern(id) {
 
 const readText = (rel) => readFileSync(join(REPO_ROOT, rel), 'utf8')
 
-/** A block (marketing section, login/signup, dashboard) — spec + source. */
+/** A block (marketing section, login/signup, dashboard) — ALL source files an agent
+ *  needs to assemble it: every file (multi-file blocks like dashboard-plain included),
+ *  the import lines, exported symbols, and sample data. */
 export function getBlock(name) {
   const g = getGraph()
   const node = g.nodes.find((n) => n.id === `block:${name}`)
-  if (!node) return { error: `No block "${name}". Use search or list_blocks.` }
-  const label = node.label || name // e.g. "marketing/hero", "login-01"
-  const candidates = [`src/blocks/${label}.tsx`, `src/blocks/${label}/page.tsx`]
-  const rel = candidates.find((c) => existsSync(join(REPO_ROOT, c)))
+  if (!node) return { error: `No block "${name}". Use list("block") or search.` }
+  const label = node.label || name // e.g. "marketing/hero", "login-01", "dashboard-plain"
+
+  const singleTsx = `src/blocks/${label}.tsx`
+  const dir = `src/blocks/${label}`
+  let relFiles = []
+  if (existsSync(join(REPO_ROOT, singleTsx))) relFiles = [singleTsx]
+  else if (existsSync(join(REPO_ROOT, dir)) && statSync(join(REPO_ROOT, dir)).isDirectory())
+    relFiles = readdirSync(join(REPO_ROOT, dir)).filter((f) => /\.(tsx?|json)$/.test(f)).map((f) => `${dir}/${f}`)
+
+  const files = relFiles.map((rel) => ({ path: rel, code: readText(rel) }))
+  const main = relFiles.find((f) => f.endsWith('page.tsx')) || relFiles[0] || null
+  const mainCode = main ? readText(main) : ''
+  const imports = mainCode.split('\n').filter((l) => /^import\s/.test(l))
+  const exports = [...mainCode.matchAll(/export\s+(?:function|const)\s+(\w+)/g)].map((m) => m[1])
+  const dataFile = relFiles.find((f) => f.endsWith('.json'))
+  const sample_data = dataFile ? JSON.parse(readText(dataFile)) : null
+
   return {
     id: node.id,
     label,
-    path: rel ?? null,
+    main,
+    exports,
+    imports,
+    files,
+    sample_data,
     composes: g.edges
       .filter((e) => (e.source || e.s) === node.id && e.type === 'composed_of')
       .map((e) => (e.target || e.t)),
-    code: rel ? readText(rel) : null,
+  }
+}
+
+/** A chart template — source + the expected data shape (chartData / chartConfig). */
+export function getChart(name) {
+  const g = getGraph()
+  const node = g.nodes.find((n) => n.id === `chart:${name}`)
+  const rel = `src/blocks/charts/${(node && node.label) || name}.tsx`
+  if (!existsSync(join(REPO_ROOT, rel))) return { error: `No chart "${name}". Use list("chart").` }
+  const code = readText(rel)
+  const dataMatch = code.match(/const\s+chartData\s*=\s*(\[[\s\S]*?\n\])/)
+  const configMatch = code.match(/const\s+chartConfig\s*=\s*(\{[\s\S]*?\n\})\s*satisfies?/)
+  const firstRow = dataMatch ? (dataMatch[1].match(/\{[\s\S]*?\}/) || [null])[0] : null
+  return {
+    id: node ? node.id : `chart:${name}`,
+    label: (node && node.label) || name,
+    path: rel,
+    code,
+    data_shape: { chartData_first_row: firstRow, chartConfig: configMatch ? configMatch[1] : null },
   }
 }
 
@@ -141,12 +229,58 @@ export function getSkill(rule) {
   return { rule, content: readText(`skills/2one-dls/rules/${rule}.md`) }
 }
 
+/** A single UX rule — text + rationale + severity. */
+export function getRule(id) {
+  const r = getUxRules().rules.find((x) => x.id === id)
+  if (!r) return { error: `No rule "${id}". Use list("rule").` }
+  return { id: r.id, category: r.category, severity: r.severity, label: r.label, statement: r.statement, rationale: r.rationale }
+}
+
+/** Enumerate ids + labels by type (component|block|chart|pattern|intent|rule|token|ai-component|recipe). */
+const TYPE_MAP = {
+  component: ['component', 'component-2one'],
+  block: ['template-block'],
+  chart: ['template-chart'],
+  pattern: ['pattern'],
+  intent: ['intent'],
+  rule: ['rule'],
+  token: ['token-color', 'token-type', 'token-radius'],
+  'ai-component': ['ai-component'],
+}
+export function listByType(type) {
+  if (type === 'recipe') return { type, items: recipeList().map((f) => ({ id: f.replace('.md', ''), label: f.replace('.md', '') })) }
+  const types = TYPE_MAP[type]
+  if (!types) return { error: `Unknown type "${type}". One of: ${Object.keys(TYPE_MAP).join(', ')}, recipe.` }
+  return {
+    type,
+    items: getGraph().nodes.filter((n) => types.includes(n.type)).map((n) => ({ id: n.id.split(':')[1], label: n.label ?? null })),
+  }
+}
+
+const recipeList = () => (existsSync(join(REPO_ROOT, 'recipes')) ? readdirSync(join(REPO_ROOT, 'recipes')).filter((f) => f.endsWith('.md')) : [])
+
+/** A build recipe (build-an-app, build-a-website, …). No id → list them. */
+export function getRecipe(id) {
+  const recipes = recipeList().map((f) => f.replace('.md', ''))
+  if (!id) return { recipes }
+  if (!recipes.includes(id)) return { error: `No recipe "${id}". Available: ${recipes.join(', ')}` }
+  return { id, content: readText(`recipes/${id}.md`) }
+}
+
 export function search(query, limit = 20) {
-  const q = String(query).toLowerCase()
+  // Tokenize + OR-match + rank by score, so "stat metric card table chart" matches
+  // (each word scored independently) instead of failing as one phrase.
+  const tokens = String(query).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean)
+  if (!tokens.length) return []
   return getGraph()
-    .nodes.filter((n) => n.id.toLowerCase().includes(q) || (n.label || '').toLowerCase().includes(q))
+    .nodes.map((n) => {
+      const hay = `${n.id} ${n.label ?? ''}`.toLowerCase()
+      const score = tokens.reduce((s, t) => (hay.includes(t) ? s + 1 : s), 0)
+      return { id: n.id, type: n.type, label: n.label ?? null, score }
+    })
+    .filter((n) => n.score > 0)
+    .sort((a, b) => b.score - a.score || a.id.localeCompare(b.id))
     .slice(0, limit)
-    .map((n) => ({ id: n.id, type: n.type, label: n.label ?? null }))
 }
 
 export function brandFacts() {

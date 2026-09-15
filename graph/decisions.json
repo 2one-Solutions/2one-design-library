@@ -217,6 +217,119 @@
           "empty media",
           "media preview"
         ]
+      },
+      {
+        "id": "intent:dashboard",
+        "label": "Dashboard",
+        "description": "An overview dashboard: KPI tiles, a data table and charts.",
+        "source": "src/blocks/dashboard-plain/page.tsx",
+        "aliases": [
+          "dashboard",
+          "overview",
+          "admin",
+          "support",
+          "analytics",
+          "reporting",
+          "home",
+          "app",
+          "console",
+          "panel"
+        ]
+      },
+      {
+        "id": "intent:stat-tiles",
+        "label": "Stat tiles / KPIs",
+        "description": "A row of KPI / metric tiles.",
+        "source": "src/blocks/dashboard-plain/section-cards.tsx",
+        "aliases": [
+          "kpi",
+          "kpis",
+          "metric",
+          "metrics",
+          "stat",
+          "stats",
+          "tile",
+          "tiles",
+          "cards",
+          "summary",
+          "scorecard"
+        ]
+      },
+      {
+        "id": "intent:data-table",
+        "label": "Data table",
+        "description": "A sortable, selectable table of records.",
+        "source": "src/components/ui/table.tsx",
+        "aliases": [
+          "table",
+          "datatable",
+          "grid",
+          "records",
+          "rows",
+          "listing",
+          "spreadsheet"
+        ]
+      },
+      {
+        "id": "intent:chart",
+        "label": "Chart",
+        "description": "A chart or data visualisation.",
+        "source": "src/components/ui/chart.tsx",
+        "aliases": [
+          "chart",
+          "charts",
+          "graph",
+          "graphs",
+          "plot",
+          "visualization",
+          "visualisation",
+          "dataviz",
+          "trend"
+        ]
+      },
+      {
+        "id": "intent:login",
+        "label": "Login",
+        "description": "A sign-in screen.",
+        "source": "src/blocks/login-01.tsx",
+        "aliases": [
+          "login",
+          "signin",
+          "log",
+          "authenticate",
+          "auth",
+          "session"
+        ]
+      },
+      {
+        "id": "intent:signup",
+        "label": "Signup",
+        "description": "A create-account screen.",
+        "source": "src/blocks/signup-01.tsx",
+        "aliases": [
+          "signup",
+          "register",
+          "registration",
+          "join",
+          "onboard",
+          "create"
+        ]
+      },
+      {
+        "id": "intent:home",
+        "label": "Home page",
+        "description": "A marketing home / landing page — the site shell with hero and sections.",
+        "source": "src/patterns/marketing-site.tsx",
+        "aliases": [
+          "home",
+          "homepage",
+          "landing",
+          "marketing",
+          "website",
+          "front",
+          "hero",
+          "site"
+        ]
       }
     ],
     "context": [
@@ -1531,6 +1644,55 @@
       "source": "intent:media-placeholder",
       "target": "component-2one:media-placeholder",
       "type": "realized_by"
+    },
+    {
+      "source": "intent:dashboard",
+      "target": "block:dashboard-plain",
+      "type": "realized_by",
+      "priority": "PREFERRED",
+      "source_ref": "src/blocks/dashboard-plain/page.tsx"
+    },
+    {
+      "source": "intent:stat-tiles",
+      "target": "component-2one:stat-tile",
+      "type": "realized_by",
+      "priority": "PREFERRED",
+      "source_ref": "src/components/stat-tile.tsx"
+    },
+    {
+      "source": "intent:data-table",
+      "target": "component-2one:data-table",
+      "type": "realized_by",
+      "priority": "PREFERRED",
+      "source_ref": "src/components/data-table.tsx"
+    },
+    {
+      "source": "intent:chart",
+      "target": "component:chart",
+      "type": "realized_by",
+      "priority": "PREFERRED",
+      "source_ref": "src/components/ui/chart.tsx"
+    },
+    {
+      "source": "intent:login",
+      "target": "block:login-01",
+      "type": "realized_by",
+      "priority": "PREFERRED",
+      "source_ref": "src/blocks/login-01.tsx"
+    },
+    {
+      "source": "intent:signup",
+      "target": "block:signup-01",
+      "type": "realized_by",
+      "priority": "PREFERRED",
+      "source_ref": "src/blocks/signup-01.tsx"
+    },
+    {
+      "source": "intent:home",
+      "target": "pattern:marketing-site",
+      "type": "realized_by",
+      "priority": "PREFERRED",
+      "source_ref": "src/patterns/marketing-site.tsx"
     }
   ]
 }

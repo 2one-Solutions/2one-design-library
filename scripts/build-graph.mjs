@@ -48,7 +48,7 @@ const decisions = optional('decisions', {})
 const TYPE_CLASS = {}
 for (const [cls, def] of Object.entries(ontology.node_classes ?? {})) for (const t of def.node_types ?? []) TYPE_CLASS[t] = cls
 const classOf = (type) => TYPE_CLASS[type] || 'Unknown'
-const AUTHORED_TYPES = new Set(['rule', 'brand', 'persona', 'intent', 'context', 'state', 'a11y', 'pattern', 'variant', 'ai-component'])
+const AUTHORED_TYPES = new Set(['rule', 'brand', 'persona', 'intent', 'context', 'state', 'a11y', 'pattern', 'variant', 'ai-component', 'recipe'])
 const provOfType = (type) => (AUTHORED_TYPES.has(type) ? 'explicit' : 'derived')
 
 const nodes = new Map()
@@ -157,6 +157,8 @@ if (existsSync(join(root, `${cfg.rel('blocks')}/dashboard-plain`)))
   addTemplate('block:dashboard-plain', 'dashboard-plain', 'template-block', ls(`${cfg.rel('blocks')}/dashboard-plain`, (f) => f.endsWith('.tsx')).map((f) => `${cfg.rel('blocks')}/dashboard-plain/${f}`))
 for (const f of ls(`${cfg.rel('blocks')}/marketing`, (f) => f.endsWith('.tsx'))) addTemplate(`block:marketing-${baseName(f)}`, `marketing/${baseName(f)}`, 'template-block', [`${cfg.rel('blocks')}/marketing/${f}`])
 for (const f of ls(`${cfg.rel('blocks')}/charts`, (f) => f.endsWith('.tsx'))) addTemplate(`chart:${baseName(f)}`, baseName(f), 'template-chart', [`${cfg.rel('blocks')}/charts/${f}`])
+// Recipes: end-to-end build guides (recipes/*.md) → searchable recipe nodes.
+for (const f of ls('recipes', (f) => f.endsWith('.md'))) addNode(`recipe:${baseName(f)}`, 'recipe', baseName(f), { source_ref: `recipes/${f}` })
 
 // ---- RULE nodes from the authoritative contract rules/ux-rules.json ----
 // Fulfils that file's stated contract: each UX rule becomes a `rule:` node with

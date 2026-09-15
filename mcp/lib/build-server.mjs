@@ -62,6 +62,12 @@ export function makeServer() {
     async ({ name }) => asText(dls.getBlock(name)),
   )
   server.tool(
+    'get_chart',
+    'Get a 2one chart template (e.g. "chart-area-default", "chart-bar-interactive") — its source and the expected data shape (chartData / chartConfig). Use for any chart or data-viz.',
+    { name: z.string() },
+    async ({ name }) => asText(dls.getChart(name)),
+  )
+  server.tool(
     'get_ai_component',
     'Get a 2one AI-interface component (e.g. "streaming-text", "reasoning-panel", "guardrail-notice", "typing-indicator") — its node, machine spec, and source. Use for AI/agent UIs.',
     { name: z.string() },
@@ -78,6 +84,24 @@ export function makeServer() {
     'Get the 2one skill — WRONG vs RIGHT code examples per rule area (e.g. "brand", "composition", "forms"). Call with no rule to list them. Use these to see the correct pattern, not just the rule.',
     { rule: z.string().optional() },
     async ({ rule }) => asText(dls.getSkill(rule)),
+  )
+  server.tool(
+    'get_rule',
+    'Get one UX rule by id (e.g. "tokens-only", "pill-buttons", "no-color-alone") — its statement, rationale, and severity.',
+    { id: z.string() },
+    async ({ id }) => asText(dls.getRule(id)),
+  )
+  server.tool(
+    'list',
+    'Enumerate ids + labels of a node type. type ∈ component | block | chart | pattern | intent | rule | token | ai-component | recipe. Use to discover what exists before fetching it.',
+    { type: z.string() },
+    async ({ type }) => asText(dls.listByType(type)),
+  )
+  server.tool(
+    'get_recipe',
+    'Get a build recipe (e.g. "build-an-app", "build-a-website", "build-marketing", "build-a-deck") — an end-to-end guide. Call with no id to list them.',
+    { id: z.string().optional() },
+    async ({ id }) => asText(dls.getRecipe(id)),
   )
   server.tool(
     'get_tokens',

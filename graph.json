@@ -4,23 +4,24 @@
   "generated_for": "0.2.0",
   "ontology": "graph/ontology.json",
   "stats": {
-    "nodes": 336,
-    "edges": 1029,
+    "nodes": 350,
+    "edges": 1047,
     "by_node_type": {
       "a11y": 8,
       "ai-component": 7,
       "template-block": 20,
       "brand": 8,
       "template-chart": 31,
-      "component-2one": 5,
+      "component-2one": 7,
       "component": 55,
       "context": 4,
       "contrast": 9,
-      "intent": 27,
+      "intent": 34,
       "pattern": 11,
-      "package": 13,
+      "package": 14,
       "token-radius": 7,
       "ramp": 21,
+      "recipe": 4,
       "rule": 48,
       "state": 10,
       "token-color": 36,
@@ -31,12 +32,13 @@
       "AccessibilityRequirement": 8,
       "Pattern": 69,
       "Brand": 8,
-      "Component": 66,
+      "Component": 68,
       "Context": 4,
       "Evidence": 9,
-      "Intent": 27,
-      "Package": 13,
+      "Intent": 34,
+      "Package": 14,
       "Foundation": 74,
+      "Guide": 4,
       "Rule": 48,
       "State": 10
     },
@@ -44,9 +46,9 @@
       "alternative_to": 2,
       "applies_when": 1,
       "appropriate_for": 4,
-      "composed_of": 460,
+      "composed_of": 469,
       "demonstrates": 5,
-      "depends_on": 81,
+      "depends_on": 83,
       "derived_from": 26,
       "embodies": 6,
       "forbidden_with": 1,
@@ -57,7 +59,7 @@
       "preferred_composition": 46,
       "preferred_for": 6,
       "preferred_over": 2,
-      "realized_by": 24,
+      "realized_by": 31,
       "requires": 15,
       "serves": 5,
       "specializes": 6,
@@ -66,12 +68,12 @@
     },
     "by_provenance": {
       "nodes": {
-        "explicit": 129,
-        "derived": 207
+        "explicit": 140,
+        "derived": 210
       },
       "edges": {
-        "explicit": 312,
-        "derived": 717
+        "explicit": 319,
+        "derived": 728
       }
     },
     "ontology_violations": 0
@@ -608,6 +610,14 @@
       "path": "src/components/bottom-nav-item.tsx"
     },
     {
+      "id": "component-2one:data-table",
+      "type": "component-2one",
+      "class": "Component",
+      "prov": "derived",
+      "label": "DataTable",
+      "path": "src/components/data-table.tsx"
+    },
+    {
       "id": "component-2one:logo",
       "type": "component-2one",
       "class": "Component",
@@ -622,6 +632,14 @@
       "prov": "derived",
       "label": "MediaPlaceholder",
       "path": "src/components/media-placeholder.tsx"
+    },
+    {
+      "id": "component-2one:stat-tile",
+      "type": "component-2one",
+      "class": "Component",
+      "prov": "derived",
+      "label": "StatTile",
+      "path": "src/components/stat-tile.tsx"
     },
     {
       "id": "component-2one:theme-toggle",
@@ -1238,6 +1256,26 @@
       "source": "src/blocks/login-01.tsx"
     },
     {
+      "id": "intent:chart",
+      "type": "intent",
+      "class": "Intent",
+      "prov": "explicit",
+      "label": "Chart",
+      "description": "A chart or data visualisation.",
+      "source": "src/components/ui/chart.tsx",
+      "aliases": [
+        "chart",
+        "charts",
+        "graph",
+        "graphs",
+        "plot",
+        "visualization",
+        "visualisation",
+        "dataviz",
+        "trend"
+      ]
+    },
+    {
       "id": "intent:confirm-action",
       "type": "intent",
       "class": "Intent",
@@ -1245,6 +1283,45 @@
       "label": "Confirm an action",
       "description": "Ask the user to confirm before proceeding.",
       "source": "graph/decisions.json"
+    },
+    {
+      "id": "intent:dashboard",
+      "type": "intent",
+      "class": "Intent",
+      "prov": "explicit",
+      "label": "Dashboard",
+      "description": "An overview dashboard: KPI tiles, a data table and charts.",
+      "source": "src/blocks/dashboard-plain/page.tsx",
+      "aliases": [
+        "dashboard",
+        "overview",
+        "admin",
+        "support",
+        "analytics",
+        "reporting",
+        "home",
+        "app",
+        "console",
+        "panel"
+      ]
+    },
+    {
+      "id": "intent:data-table",
+      "type": "intent",
+      "class": "Intent",
+      "prov": "explicit",
+      "label": "Data table",
+      "description": "A sortable, selectable table of records.",
+      "source": "src/components/ui/table.tsx",
+      "aliases": [
+        "table",
+        "datatable",
+        "grid",
+        "records",
+        "rows",
+        "listing",
+        "spreadsheet"
+      ]
     },
     {
       "id": "intent:destructive-action",
@@ -1272,6 +1349,42 @@
       "label": "Hold the frame before first output",
       "description": "Keep the frame while the model has nothing to show yet.",
       "source": "src/ai-components/loading-state.tsx"
+    },
+    {
+      "id": "intent:home",
+      "type": "intent",
+      "class": "Intent",
+      "prov": "explicit",
+      "label": "Home page",
+      "description": "A marketing home / landing page — the site shell with hero and sections.",
+      "source": "src/patterns/marketing-site.tsx",
+      "aliases": [
+        "home",
+        "homepage",
+        "landing",
+        "marketing",
+        "website",
+        "front",
+        "hero",
+        "site"
+      ]
+    },
+    {
+      "id": "intent:login",
+      "type": "intent",
+      "class": "Intent",
+      "prov": "explicit",
+      "label": "Login",
+      "description": "A sign-in screen.",
+      "source": "src/blocks/login-01.tsx",
+      "aliases": [
+        "login",
+        "signin",
+        "log",
+        "authenticate",
+        "auth",
+        "session"
+      ]
     },
     {
       "id": "intent:low-emphasis-action",
@@ -1464,6 +1577,45 @@
       "source": "src/ai-components/thinking-indicator.tsx"
     },
     {
+      "id": "intent:signup",
+      "type": "intent",
+      "class": "Intent",
+      "prov": "explicit",
+      "label": "Signup",
+      "description": "A create-account screen.",
+      "source": "src/blocks/signup-01.tsx",
+      "aliases": [
+        "signup",
+        "register",
+        "registration",
+        "join",
+        "onboard",
+        "create"
+      ]
+    },
+    {
+      "id": "intent:stat-tiles",
+      "type": "intent",
+      "class": "Intent",
+      "prov": "explicit",
+      "label": "Stat tiles / KPIs",
+      "description": "A row of KPI / metric tiles.",
+      "source": "src/blocks/dashboard-plain/section-cards.tsx",
+      "aliases": [
+        "kpi",
+        "kpis",
+        "metric",
+        "metrics",
+        "stat",
+        "stats",
+        "tile",
+        "tiles",
+        "cards",
+        "summary",
+        "scorecard"
+      ]
+    },
+    {
       "id": "intent:stream-answer",
       "type": "intent",
       "class": "Intent",
@@ -1621,6 +1773,13 @@
       "class": "Brand",
       "prov": "explicit",
       "label": "Businesses — strategic & goal-oriented"
+    },
+    {
+      "id": "pkg:@tanstack/react-table",
+      "type": "package",
+      "class": "Package",
+      "prov": "derived",
+      "label": "@tanstack/react-table"
     },
     {
       "id": "pkg:class-variance-authority",
@@ -1936,6 +2095,38 @@
       "prov": "derived",
       "label": "success-600",
       "hex": "#15803d"
+    },
+    {
+      "id": "recipe:build-a-deck",
+      "type": "recipe",
+      "class": "Guide",
+      "prov": "explicit",
+      "label": "build-a-deck",
+      "source_ref": "recipes/build-a-deck.md"
+    },
+    {
+      "id": "recipe:build-a-website",
+      "type": "recipe",
+      "class": "Guide",
+      "prov": "explicit",
+      "label": "build-a-website",
+      "source_ref": "recipes/build-a-website.md"
+    },
+    {
+      "id": "recipe:build-an-app",
+      "type": "recipe",
+      "class": "Guide",
+      "prov": "explicit",
+      "label": "build-an-app",
+      "source_ref": "recipes/build-an-app.md"
+    },
+    {
+      "id": "recipe:build-marketing",
+      "type": "recipe",
+      "class": "Guide",
+      "prov": "explicit",
+      "label": "build-marketing",
+      "source_ref": "recipes/build-marketing.md"
     },
     {
       "id": "rule:both-themes",
@@ -3343,6 +3534,24 @@
       "prov": "derived"
     },
     {
+      "source": "component-2one:data-table",
+      "target": "component:table",
+      "type": "composed_of",
+      "prov": "derived"
+    },
+    {
+      "source": "component-2one:data-table",
+      "target": "token:muted",
+      "type": "composed_of",
+      "prov": "derived"
+    },
+    {
+      "source": "component-2one:data-table",
+      "target": "token:muted-foreground",
+      "type": "composed_of",
+      "prov": "derived"
+    },
+    {
       "source": "component-2one:media-placeholder",
       "target": "component:aspect-ratio",
       "type": "composed_of",
@@ -3375,6 +3584,42 @@
     {
       "source": "component-2one:media-placeholder",
       "target": "type:xs",
+      "type": "composed_of",
+      "prov": "derived"
+    },
+    {
+      "source": "component-2one:stat-tile",
+      "target": "component:badge",
+      "type": "composed_of",
+      "prov": "derived"
+    },
+    {
+      "source": "component-2one:stat-tile",
+      "target": "component:card",
+      "type": "composed_of",
+      "prov": "derived"
+    },
+    {
+      "source": "component-2one:stat-tile",
+      "target": "token:muted",
+      "type": "composed_of",
+      "prov": "derived"
+    },
+    {
+      "source": "component-2one:stat-tile",
+      "target": "token:muted-foreground",
+      "type": "composed_of",
+      "prov": "derived"
+    },
+    {
+      "source": "component-2one:stat-tile",
+      "target": "token:success",
+      "type": "composed_of",
+      "prov": "derived"
+    },
+    {
+      "source": "component-2one:stat-tile",
+      "target": "type:sm",
       "type": "composed_of",
       "prov": "derived"
     },
@@ -6024,7 +6269,19 @@
       "prov": "derived"
     },
     {
+      "source": "component-2one:data-table",
+      "target": "pkg:@tanstack/react-table",
+      "type": "depends_on",
+      "prov": "derived"
+    },
+    {
       "source": "component-2one:media-placeholder",
+      "target": "pkg:lucide-react",
+      "type": "depends_on",
+      "prov": "derived"
+    },
+    {
+      "source": "component-2one:stat-tile",
       "target": "pkg:lucide-react",
       "type": "depends_on",
       "prov": "derived"
@@ -8401,12 +8658,36 @@
       "evidence": "src/blocks/login-01.tsx"
     },
     {
+      "source": "intent:chart",
+      "target": "component:chart",
+      "type": "realized_by",
+      "prov": "explicit",
+      "priority": "PREFERRED",
+      "evidence": "src/components/ui/chart.tsx"
+    },
+    {
       "source": "intent:confirm-action",
       "target": "component:alert-dialog",
       "type": "realized_by",
       "prov": "explicit",
       "priority": "PREFERRED",
       "evidence": "src/components/ui/alert-dialog.tsx"
+    },
+    {
+      "source": "intent:dashboard",
+      "target": "block:dashboard-plain",
+      "type": "realized_by",
+      "prov": "explicit",
+      "priority": "PREFERRED",
+      "evidence": "src/blocks/dashboard-plain/page.tsx"
+    },
+    {
+      "source": "intent:data-table",
+      "target": "component-2one:data-table",
+      "type": "realized_by",
+      "prov": "explicit",
+      "priority": "PREFERRED",
+      "evidence": "src/components/data-table.tsx"
     },
     {
       "source": "intent:destructive-action",
@@ -8423,6 +8704,22 @@
       "prov": "explicit",
       "priority": "PREFERRED",
       "evidence": "src/ai-components/loading-state.tsx"
+    },
+    {
+      "source": "intent:home",
+      "target": "pattern:marketing-site",
+      "type": "realized_by",
+      "prov": "explicit",
+      "priority": "PREFERRED",
+      "evidence": "src/patterns/marketing-site.tsx"
+    },
+    {
+      "source": "intent:login",
+      "target": "block:login-01",
+      "type": "realized_by",
+      "prov": "explicit",
+      "priority": "PREFERRED",
+      "evidence": "src/blocks/login-01.tsx"
     },
     {
       "source": "intent:low-emphasis-action",
@@ -8539,6 +8836,22 @@
       "prov": "explicit",
       "priority": "PREFERRED",
       "evidence": "src/ai-components/thinking-indicator.tsx"
+    },
+    {
+      "source": "intent:signup",
+      "target": "block:signup-01",
+      "type": "realized_by",
+      "prov": "explicit",
+      "priority": "PREFERRED",
+      "evidence": "src/blocks/signup-01.tsx"
+    },
+    {
+      "source": "intent:stat-tiles",
+      "target": "component-2one:stat-tile",
+      "type": "realized_by",
+      "prov": "explicit",
+      "priority": "PREFERRED",
+      "evidence": "src/components/stat-tile.tsx"
     },
     {
       "source": "intent:stream-answer",

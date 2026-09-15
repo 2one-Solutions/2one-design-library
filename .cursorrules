@@ -6,7 +6,7 @@ Read manifest.json FIRST — the machine-readable index of this repository plus 
 instructions_for_ai contract: answer only from repo content, cite the file you used,
 and say explicitly when something is not here — never guess a brand fact.
 
-The 2one Design Language System: 60 components (shadcn/ui re-skinned to the 2one
+The 2one Design Language System: 62 components (shadcn/ui re-skinned to the 2one
 tokens), design tokens, and the brand. The system is grayscale-founded with a single brand accent (#30A1FF, used for emphasis — links, focus, selection), with a light and an audited dark theme, pill buttons, Satoshi headings and Inter body; danger/success are validation + data-trend colours (always paired with a direction cue).
 
 Non-negotiables

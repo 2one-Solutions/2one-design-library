@@ -199,7 +199,7 @@
     },
     "components": {
       "tier": 2,
-      "count": 60,
+      "count": 62,
       "naming": "shadcn (Input, Select, RadioGroup, InputOTP, DropdownMenu, …) — not the pre-2026 custom names",
       "path": "src/components/ui/",
       "formats_available": [
@@ -271,8 +271,10 @@
       "own": [
         "app-bar",
         "bottom-nav-item",
+        "data-table",
         "logo",
         "media-placeholder",
+        "stat-tile",
         "theme-toggle",
         "toolbar"
       ],
@@ -372,6 +374,8 @@
         "ContextMenuSubContent",
         "ContextMenuSubTrigger",
         "ContextMenuTrigger",
+        "DataTable",
+        "DataTableProps",
         "Dialog",
         "DialogClose",
         "DialogContent",
@@ -573,6 +577,8 @@
         "Skeleton",
         "Slider",
         "Spinner",
+        "StatTile",
+        "StatTileProps",
         "Switch",
         "Table",
         "TableBody",
@@ -603,6 +609,7 @@
         "badgeVariants",
         "buttonGroupVariants",
         "buttonVariants",
+        "dataTableColumns",
         "navigationMenuTriggerStyle",
         "tabsListVariants",
         "toggleVariants",
@@ -1814,7 +1821,7 @@
       "Button: rounded-full (pill) instead of shadcn's rounded-md — the 2one signature, applied by an unlayered [data-slot=\"button\"] rule so `shadcn add` cannot regress it."
     ],
     "not_covered": [
-      "Combobox / Date Picker / Data Table / Typography are shadcn composition patterns, not single components — build them from the primitives.",
+      "Combobox / Date Picker / Typography are shadcn composition patterns, not single components — build them from the primitives.",
       "Toast ships as sonner."
     ],
     "history": "Replaced the earlier hand-built Figma-1:1 set (12 components) with this shadcn-based system on user direction (2026-08-10). The old components were removed."
