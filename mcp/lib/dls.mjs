@@ -1,24 +1,52 @@
 /*
-  DLS data + logic layer for the MCP server (Phase 0, local).
+  DLS data + logic layer for the MCP server.
 
   The 2one DLS is already machine-legible, so this layer is thin: it reads the
-  committed data (manifest, graph, tokens, brand, rules) and, for the two pieces of
-  real LOGIC (decide, check, what-uses), shells out to the repo's own scripts — so
-  the MCP answers can never drift from what `npm run` / `npx 2one` produce.
+  committed data (manifest, graph, tokens, brand, rules) directly, and for the
+  three pieces of real LOGIC (decide, check, checkPair) it calls the engine's
+  published facade (scripts/api.mjs) in-process, so the MCP answers can never
+  drift from what `npm run` / `npx 2one` produce, without paying for a spawned
+  child process on every tool call.
 
-  (Phase 2 / edge hosting would replace the shell-outs with in-process ports; kept
-  as shell-outs here on purpose — zero reimplementation, guaranteed-faithful.)
+  Which payload this file reads is not fixed to this repo — resolved via
+  mcp/lib/payload.mjs from DLS_API_KEY (a path today, standing in for a real
+  key once Supabase lands). `what_uses` is the one exception still shelling
+  out: what-uses.mjs has not been refactored into an importable function yet
+  (it is a CLI script, not an inert module like check-usage.mjs/graph-decide.mjs),
+  so it is spawned the same way it always was. Noted here rather than silently
+  left unexplained.
+
+  ---- why resolution happens here, once, at module load ----
+
+  scripts/api.mjs's `config` is a module-level singleton, resolved once when
+  scripts/lib/config.mjs is first imported (by walking up from process.cwd()).
+  A `configurePayload()` callable AFTER that import already ran could update
+  which payload the read-a-file functions below use, but could never redirect
+  `decide`/`check`/`checkPair` — they already closed over the old config. So
+  resolution has to happen before scripts/api.mjs is ever imported, and it has
+  to happen exactly once per process: one server process answers about one
+  payload for its lifetime, same as scripts/mcp.mjs did and same as how the
+  HTTP server already behaves today (resolved once at startup, unchanged for
+  every request after). The entry files (server.mjs, server-http.mjs) set
+  process.env.DLS_API_KEY before this module is ever imported; an unresolvable
+  key throws here, which is a startup failure, not a fallback.
 */
 import { readFileSync, writeFileSync, rmSync, existsSync, readdirSync, statSync } from 'node:fs'
-import { join, dirname } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { join } from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { tmpdir } from 'node:os'
 
-// mcp/ lives inside the DLS repo; the root is one level up.
-export const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..')
+import { resolvePayload } from './payload.mjs'
 
-const readJSON = (rel) => JSON.parse(readFileSync(join(REPO_ROOT, rel), 'utf8'))
+// ---- which payload this process answers about, resolved once ---------------
+const PAYLOAD = resolvePayload({ apiKey: process.env.DLS_API_KEY || null })
+if (!PAYLOAD.ok) throw new Error(`could not resolve a payload (${PAYLOAD.reason}). Check DLS_API_KEY / --api-key.`)
+
+export const getPayloadInfo = () => ({ name: PAYLOAD.name, clientId: PAYLOAD.clientId })
+const root = () => PAYLOAD.root
+
+const readJSON = (rel) => JSON.parse(readFileSync(join(root(), rel), 'utf8'))
+const readText = (rel) => readFileSync(join(root(), rel), 'utf8')
 
 // ---- committed data --------------------------------------------------------
 export const getManifest = () => readJSON('manifest.json')
@@ -33,10 +61,31 @@ export function getTokens() {
   }
 }
 
-// ---- shell-outs to the real repo scripts -----------------------------------
-function runScript(script, args) {
-  const res = spawnSync(process.execPath, [join(REPO_ROOT, 'scripts', script), ...args], {
-    cwd: REPO_ROOT,
+/*
+  scripts/api.mjs's `config` singleton resolves the payload by walking up from
+  process.cwd() at IMPORT time (scripts/lib/config.mjs). An MCP host decides
+  this process's working directory — routinely the user's home folder, not the
+  repo — so that walk-up cannot be trusted here any more than it could in the
+  old stdio server. chdir to the resolved payload root before this module is
+  first imported, so its singleton resolves against the right payload instead
+  of whatever the host happened to launch us in. Safe today because the payload
+  is resolved once per process (same as the HTTP server's current single-tenant
+  behaviour); real per-request multi-tenancy will need scripts/api.mjs's graph
+  functions to take an explicit root instead of relying on that singleton —
+  left for the phase that actually builds per-request payloads.
+*/
+process.chdir(root())
+const api = await import('../../scripts/api.mjs')
+const { checkUsage, decide: engineDecide, checkPair: engineCheckPair, resolveNode, rulesFor, a11yFor, statesFor, alternativesFor, incompatibleWith } = api
+
+// ---- engine calls, in-process -----------------------------------------------
+/** Map a build intent -> a DLS decision (component/pattern), or suggestions. */
+export const decide = (intent) => engineDecide(intent)
+
+/** Impact analysis: what uses this node/label. Still a shell-out — see header. */
+export function whatUses(query) {
+  const res = spawnSync(process.execPath, [join(root(), 'scripts', 'what-uses.mjs'), String(query), '--json'], {
+    cwd: root(),
     encoding: 'utf8',
     maxBuffer: 16 * 1024 * 1024,
   })
@@ -48,25 +97,26 @@ function runScript(script, args) {
   }
 }
 
-/** Map a build intent → a DLS decision (component/pattern), or suggestions. */
-export const decide = (intent) => runScript('graph-decide.mjs', ['decide', String(intent), '--json'])
-
-/** Impact analysis: what uses this node/label. */
-export const whatUses = (query) => runScript('what-uses.mjs', [String(query), '--json'])
-
-/** Audit a snippet against the 2one rules (`npx 2one check`). Writes a temp file. */
+/** Audit a snippet against the 2one rules. Writes a temp file so checkUsage has a real path. */
 export function check(code, ext = 'tsx') {
   const tmp = join(tmpdir(), `2one-mcp-check-${Date.now()}.${ext}`)
   try {
     writeFileSync(tmp, String(code), 'utf8')
-    return runScript('cli.mjs', ['check', tmp, '--json'])
+    const r = checkUsage({ targets: [tmp], cwd: root() })
+    if (!r.ok) return { error: r.error.message, code: r.error.code }
+    return { conforms: r.errors.length === 0, errors: r.errors, warnings: r.warnings, known: r.known }
   } finally {
     try { rmSync(tmp) } catch { /* ignore */ }
   }
 }
 
+/** Whether two components/tokens may be used together, and which rules decide it. */
+export function checkPair(a, b) {
+  return engineCheckPair(a, b)
+}
+
 // ---- in-repo lookups -------------------------------------------------------
-/** Parse cva variant groups (variant/size/…) → their options, from component source. */
+/** Parse cva variant groups (variant/size/…) -> their options, from component source. */
 function parseVariants(code) {
   const out = {}
   const m = code.match(/cva\([\s\S]*?variants:\s*\{([\s\S]*?)\n\s{4}\}/)
@@ -103,7 +153,7 @@ export function getComponent(name) {
   const path = node.path ?? null
   let variants = { groups: {}, defaults: {} }
   let props = []
-  if (path && existsSync(join(REPO_ROOT, path))) {
+  if (path && existsSync(join(root(), path))) {
     const code = readText(path)
     variants = parseVariants(code)
     // exported prop-type member names (best-effort: the component's *Props interface).
@@ -112,6 +162,11 @@ export function getComponent(name) {
   }
   const opt = (grp) => (variants.groups[grp] ? ` ${grp}="${variants.groups[grp].find((o) => o !== variants.defaults[grp]) || variants.groups[grp][0]}"` : '')
   const example = `<${exportName}${variants.groups.variant ? opt('variant') : ''}>${exportName}</${exportName}>`
+
+  // The graph-decide facets (states/accessibility/alternatives/incompatible_with)
+  // only resolve for nodes the graph's own resolver knows about — best-effort,
+  // same as scripts/mcp.mjs's dls_component tool.
+  const resolvedId = resolveNode(name) ?? resolveNode(node.id)
 
   return {
     name,
@@ -125,17 +180,20 @@ export function getComponent(name) {
     variant_defaults: variants.defaults,
     props,
     example,
+    states: resolvedId ? statesFor(resolvedId) : [],
+    accessibility: resolvedId ? a11yFor(resolvedId) : [],
+    rules: resolvedId ? rulesFor(resolvedId) : [],
+    alternatives: resolvedId ? alternativesFor(resolvedId) : [],
+    incompatible_with: resolvedId ? incompatibleWith(resolvedId) : [],
   }
 }
 
 export function getPattern(id) {
-  const file = join(REPO_ROOT, 'rules', 'patterns', `${id}.json`)
+  const file = join(root(), 'rules', 'patterns', `${id}.json`)
   if (existsSync(file)) return JSON.parse(readFileSync(file, 'utf8'))
   const node = getGraph().nodes.find((n) => n.id === `pattern:${id}`)
   return node ?? { error: `No pattern "${id}". Known patterns live in rules/patterns/.` }
 }
-
-const readText = (rel) => readFileSync(join(REPO_ROOT, rel), 'utf8')
 
 /** A block (marketing section, login/signup, dashboard) — ALL source files an agent
  *  needs to assemble it: every file (multi-file blocks like dashboard-plain included),
@@ -149,9 +207,9 @@ export function getBlock(name) {
   const singleTsx = `src/blocks/${label}.tsx`
   const dir = `src/blocks/${label}`
   let relFiles = []
-  if (existsSync(join(REPO_ROOT, singleTsx))) relFiles = [singleTsx]
-  else if (existsSync(join(REPO_ROOT, dir)) && statSync(join(REPO_ROOT, dir)).isDirectory())
-    relFiles = readdirSync(join(REPO_ROOT, dir)).filter((f) => /\.(tsx?|json)$/.test(f)).map((f) => `${dir}/${f}`)
+  if (existsSync(join(root(), singleTsx))) relFiles = [singleTsx]
+  else if (existsSync(join(root(), dir)) && statSync(join(root(), dir)).isDirectory())
+    relFiles = readdirSync(join(root(), dir)).filter((f) => /\.(tsx?|json)$/.test(f)).map((f) => `${dir}/${f}`)
 
   const files = relFiles.map((rel) => ({ path: rel, code: readText(rel) }))
   const main = relFiles.find((f) => f.endsWith('page.tsx')) || relFiles[0] || null
@@ -180,10 +238,10 @@ export function getChart(name) {
   const g = getGraph()
   const node = g.nodes.find((n) => n.id === `chart:${name}`)
   const rel = `src/blocks/charts/${(node && node.label) || name}.tsx`
-  if (!existsSync(join(REPO_ROOT, rel))) return { error: `No chart "${name}". Use list("chart").` }
+  if (!existsSync(join(root(), rel))) return { error: `No chart "${name}". Use list("chart").` }
   const code = readText(rel)
   const dataMatch = code.match(/const\s+chartData\s*=\s*(\[[\s\S]*?\n\])/)
-  const configMatch = code.match(/const\s+chartConfig\s*=\s*(\{[\s\S]*?\n\})\s*satisfies?/)
+  const configMatch = code.match(/const\s+chartConfig\s*=\s*(\{[\s\S]*?\n\})\s*(?:satisfies\s+\w+)?/)
   const firstRow = dataMatch ? (dataMatch[1].match(/\{[\s\S]*?\}/) || [null])[0] : null
   return {
     id: node ? node.id : `chart:${name}`,
@@ -198,18 +256,18 @@ export function getChart(name) {
 export function getAiComponent(name) {
   const node = getGraph().nodes.find((n) => n.id === `ai-component:${name}`)
   const specPath = `rules/ai-components/${name}.json`
-  const hasSpec = existsSync(join(REPO_ROOT, specPath))
+  const hasSpec = existsSync(join(root(), specPath))
   if (!node && !hasSpec) return { error: `No ai-component "${name}".` }
   return {
     id: node?.id ?? `ai-component:${name}`,
     label: node?.label ?? name,
     description: node?.description ?? null,
     spec: hasSpec ? JSON.parse(readText(specPath)) : null,
-    code: node?.source && existsSync(join(REPO_ROOT, node.source)) ? readText(node.source) : null,
+    code: node?.source && existsSync(join(root(), node.source)) ? readText(node.source) : null,
   }
 }
 
-/** A guidance doc (web-writing, consuming, accessibility, …). No name → list them. */
+/** A guidance doc (web-writing, consuming, accessibility, …). No name -> list them. */
 export function getDoc(name) {
   const docs = docList()
   if (!name) return { docs }
@@ -218,12 +276,12 @@ export function getDoc(name) {
   return { name: file, content: readText(`docs/${file}`) }
 }
 
-/** The 2one skill (wrong/right code per rule). No rule → overview + list. */
+/** The 2one skill (wrong/right code per rule). No rule -> overview + list. */
 export function getSkill(rule) {
-  const rulesDir = join(REPO_ROOT, 'skills/2one-dls/rules')
+  const rulesDir = join(root(), 'skills/2one-dls/rules')
   const available = existsSync(rulesDir) ? readdirSync(rulesDir).filter((f) => f.endsWith('.md')).map((f) => f.replace('.md', '')) : []
   if (!rule) {
-    return { overview: existsSync(join(REPO_ROOT, 'skills/2one-dls/SKILL.md')) ? readText('skills/2one-dls/SKILL.md') : null, rules: available }
+    return { overview: existsSync(join(root(), 'skills/2one-dls/SKILL.md')) ? readText('skills/2one-dls/SKILL.md') : null, rules: available }
   }
   if (!available.includes(rule)) return { error: `No skill "${rule}". Available: ${available.join(', ')}` }
   return { rule, content: readText(`skills/2one-dls/rules/${rule}.md`) }
@@ -257,9 +315,9 @@ export function listByType(type) {
   }
 }
 
-const recipeList = () => (existsSync(join(REPO_ROOT, 'recipes')) ? readdirSync(join(REPO_ROOT, 'recipes')).filter((f) => f.endsWith('.md')) : [])
+const recipeList = () => (existsSync(join(root(), 'recipes')) ? readdirSync(join(root(), 'recipes')).filter((f) => f.endsWith('.md')) : [])
 
-/** A build recipe (build-an-app, build-a-website, …). No id → list them. */
+/** A build recipe (build-an-app, build-a-website, …). No id -> list them. */
 export function getRecipe(id) {
   const recipes = recipeList().map((f) => f.replace('.md', ''))
   if (!id) return { recipes }
@@ -301,7 +359,7 @@ export function brandFacts() {
 /** Honest gaps — sourced from manifest.system.not_covered (never fake a capability). */
 export function gaps() {
   const nc = getManifest().system?.not_covered
-  return { not_covered: nc ?? [], source: 'manifest.json → system.not_covered' }
+  return { not_covered: nc ?? [], source: 'manifest.json -> system.not_covered' }
 }
 
 // ---- lightweight web-copy scan (mirrors check:web-copy's high-confidence rules) ---
@@ -312,15 +370,12 @@ export function webCopyCheck(text) {
   if (/\b(click here|read more)\b/i.test(t)) findings.push('Non-descriptive link text ("click here" / "read more") — name the destination instead.')
   const bait = BAIT.filter((w) => new RegExp(`\\b${w}\\b`, 'i').test(t))
   if (bait.length) findings.push(`Bait/AI-slop words unless they're real repo terms: ${bait.join(', ')}.`)
-  if (/>\s*https?:\/\//i.test(t) || /\]\(https?:\/\//.test(t) === false && /^https?:\/\//im.test(t.trim())) {
-    // raw URL used as visible text
-  }
   if (/\bwelcome to\b/i.test(t)) findings.push('Drop welcome filler ("Welcome to …").')
   return { ok: findings.length === 0, findings, rule: 'brand/brand.json writing_rules + docs/web-writing.md' }
 }
 
 /** Also expose which docs to read (as resource pointers). */
 export function docList() {
-  const dir = join(REPO_ROOT, 'docs')
+  const dir = join(root(), 'docs')
   return existsSync(dir) ? readdirSync(dir).filter((f) => f.endsWith('.md')) : []
 }

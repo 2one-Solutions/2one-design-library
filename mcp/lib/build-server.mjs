@@ -7,7 +7,18 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 import * as dls from './dls.mjs'
 
-const asText = (obj) => ({ content: [{ type: 'text', text: typeof obj === 'string' ? obj : JSON.stringify(obj, null, 2) }] })
+/*
+  Every response names the payload it answered about. An agent holding answers
+  about the wrong client's design system has no symptom, so provenance travels
+  with the data rather than being available only on request.
+*/
+const asText = (data) => {
+  // search() returns a bare array; spreading an array into an object would
+  // silently turn it into {0: ..., 1: ..., ...} and lose its own shape.
+  const body = Array.isArray(data) ? { items: data } : typeof data === 'string' ? { text: data } : { ...data }
+  const withProvenance = { payload: dls.getPayloadInfo(), ...body }
+  return { content: [{ type: 'text', text: JSON.stringify(withProvenance, null, 2) }] }
+}
 
 export function makeServer() {
   const server = new McpServer(
@@ -114,6 +125,12 @@ export function makeServer() {
     'Call this on ANY UI you generate or the user shares, to audit it against the 2one design rules (`npx 2one check`). Returns errors/warnings with rule ids — fix what it reports before presenting the UI.',
     { code: z.string().describe('The TSX/JSX to audit.'), ext: z.enum(['tsx', 'jsx', 'ts', 'js']).optional() },
     async ({ code, ext }) => asText(dls.check(code, ext ?? 'tsx')),
+  )
+  server.tool(
+    'check_pair',
+    'Ask whether two components or tokens may be used together, and which rules decide it. Returns a YES / NO / UNSPECIFIED verdict with the relations and governing rules behind it, so an UNSPECIFIED answer is distinguishable from an allowed one.',
+    { a: z.string().describe('First component or token, by name or id.'), b: z.string().describe('Second component or token, by name or id.') },
+    async ({ a, b }) => asText(dls.checkPair(a, b)),
   )
   server.tool(
     'what_uses',
