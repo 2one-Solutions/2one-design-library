@@ -26,6 +26,7 @@ const calls = [
   ['search', { query: 'pricing' }],
   ['get_component', { name: 'button' }],
   ['get_pattern', { id: 'marketing-site' }],
+  ['check_pair', { a: 'Button', b: 'Button' }],
   ['what_uses', { query: 'token:primary' }],
   ['get_block', { name: 'dashboard-plain' }],
   ['get_chart', { name: 'chart-area-default' }],

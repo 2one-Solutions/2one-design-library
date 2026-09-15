@@ -1,0 +1,4 @@
+{
+  "_read_me": "Local stand-in for a future Supabase clients table (api key -> payload). Not a secret store: real per-client keys and payload data will live in Supabase once that phase lands. The one entry below just proves resolvePayload({ apiKey }) end to end before that table exists.",
+  "dev-2one-self": { "clientId": "2one", "name": "2one", "root": "self" }
+}

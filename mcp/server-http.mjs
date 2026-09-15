@@ -12,14 +12,23 @@
 import express from 'express'
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js'
 import { makeServer } from './lib/build-server.mjs'
+import { getPayloadInfo } from './lib/dls.mjs'
 
 const PORT = Number(process.env.PORT) || 8787
 const TOKEN = process.env.MCP_TOKEN || '' // when set, require Authorization: Bearer <token>
+/*
+  DLS_API_KEY, if set, picks which payload this process answers about (resolved
+  once at startup — see mcp/lib/dls.mjs). Distinct from MCP_TOKEN: that gates
+  WHO may call this server at all, this picks WHAT it answers about. Unset here
+  today (this deployment serves its own repo), on purpose — per-client keys are
+  the multi-tenant phase, not this one.
+*/
+const { name: payloadName } = getPayloadInfo()
 
 const app = express()
 app.use(express.json({ limit: '4mb' }))
 
-app.get('/health', (_req, res) => res.json({ ok: true, server: '2one-dls', transport: 'streamable-http' }))
+app.get('/health', (_req, res) => res.json({ ok: true, server: '2one-dls', payload: payloadName, transport: 'streamable-http' }))
 
 function authorized(req, res) {
   if (!TOKEN) return true
@@ -51,5 +60,8 @@ app.get('/mcp', methodNotAllowed)
 app.delete('/mcp', methodNotAllowed)
 
 app.listen(PORT, () =>
-  console.error(`2one DLS MCP (HTTP) listening on :${PORT} — POST /mcp` + (TOKEN ? '  [auth: bearer]' : '  [auth: none]')),
+  console.error(
+    `2one DLS MCP (HTTP) listening on :${PORT} — POST /mcp — serving "${payloadName}"` +
+      (TOKEN ? '  [auth: bearer]' : '  [auth: none]'),
+  ),
 )
