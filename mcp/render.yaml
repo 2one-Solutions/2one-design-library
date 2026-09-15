@@ -1,0 +1,17 @@
+# Render blueprint for the 2one DLS MCP server (Streamable HTTP).
+# Render → New → Blueprint → point at this repo. Or create a Web Service manually
+# with runtime=Docker, dockerfilePath=./mcp/Dockerfile, dockerContext=. (repo root).
+#
+# After deploy, the endpoint is:  https://<service>.onrender.com/mcp
+services:
+  - type: web
+    name: 2one-mcp
+    runtime: docker
+    dockerfilePath: ./mcp/Dockerfile
+    dockerContext: .
+    plan: starter            # ~$7/mo always-on; "free" also works but sleeps
+    healthCheckPath: /health
+    autoDeploy: false
+    envVars:
+      - key: MCP_TOKEN        # set a secret in the dashboard to require Bearer auth
+        sync: false
