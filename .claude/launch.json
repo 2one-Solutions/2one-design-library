@@ -9,6 +9,15 @@
         "dev"
       ],
       "port": 4180
+    },
+    {
+      "name": "client-studio",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "studio:dev"
+      ],
+      "port": 4190
     }
   ]
 }

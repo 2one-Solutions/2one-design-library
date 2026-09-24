@@ -1,0 +1,17 @@
+/* The real theme, plus a scan of the component sources so Tailwind emits their classes.
+   The client's payload is layered on top at runtime as CSS variable overrides. */
+@import '../../src/styles/globals.css';
+
+@source '../../src/components/**/*.{ts,tsx}';
+@source './**/*.{ts,tsx}';
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+h1, h2, h3 {
+  font-family: var(--font-heading);
+  letter-spacing: -0.02em;
+}
