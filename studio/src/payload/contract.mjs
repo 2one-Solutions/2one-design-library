@@ -22,8 +22,8 @@
   globals.css and fails if the two differ, so adding a variable to the theme
   without teaching the contract is a failing check, not a silent gap.
 
-  Deliberately absent for now: logos (inline SVG can carry script), copy
-  overrides and client components. Each arrives in its own slice.
+  Deliberately absent for now: logos (inline SVG can carry script) and copy
+  overrides. Client components are here as data only, see checkComponents.
 */
 
 export const PAYLOAD_VERSION = 1
@@ -52,10 +52,16 @@ const LENGTH_RE = /^\d{1,3}(\.\d{1,3})?(px|rem)$/
 // A font stack: names, commas, quotes. No parentheses, semicolons, braces or slashes.
 const FONT_RE = /^[A-Za-z0-9 ,'"_-]{1,200}$/
 
-const TOP_KEYS = ['version', 'name', 'brand', 'tokens']
+const TOP_KEYS = ['version', 'name', 'brand', 'tokens', 'components']
 const BRAND_KEYS = ['name', 'tagline', 'mission', 'vision', 'voice', 'tone']
 const TOKEN_KEYS = ['light', 'dark', 'fonts']
 const DESCRIPTOR_KEYS = ['descriptors', 'note']
+const COMPONENTS_KEYS = ['custom']
+const CUSTOM_KEYS = ['name', 'description', 'guidance', 'props']
+const PROP_KEYS = ['name', 'type', 'description']
+const COMPONENT_NAME_RE = /^[A-Z][A-Za-z0-9]{0,39}$/
+const PROP_NAME_RE = /^[a-zA-Z][A-Za-z0-9]{0,39}$/
+export const MAX_CUSTOM_COMPONENTS = 50
 
 const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v)
 
@@ -87,6 +93,43 @@ function checkVarMap(map, allowed, re, kind, path, errors) {
     if (!allowed.includes(k)) errors.push(`${path}.${k}: not a themable variable`)
     else if (typeof v !== 'string' || !re.test(v.trim())) errors.push(`${path}.${k}: "${String(v).slice(0, 40)}" is not a valid ${kind}`)
   }
+}
+
+/*
+  Client components are DATA ONLY. A client's own React would be untrusted code
+  running on a hosted page, so the studio records what a component is (name,
+  what it is for, its props) and never executes it. The same description is what
+  an LLM reads through the MCP server, which is the point of listing them.
+*/
+function checkComponents(c, errors) {
+  if (!isObject(c)) return errors.push('payload.components: must be an object')
+  unknownKeys(c, COMPONENTS_KEYS, 'payload.components', errors)
+  if (c.custom === undefined) return
+  if (!Array.isArray(c.custom) || c.custom.length > MAX_CUSTOM_COMPONENTS) {
+    return errors.push(`payload.components.custom: must be a list of at most ${MAX_CUSTOM_COMPONENTS}`)
+  }
+  const seen = new Set()
+  c.custom.forEach((item, i) => {
+    const p = `payload.components.custom[${i}]`
+    if (!isObject(item)) return errors.push(`${p}: must be an object`)
+    unknownKeys(item, CUSTOM_KEYS, p, errors)
+    if (typeof item.name !== 'string' || !COMPONENT_NAME_RE.test(item.name)) errors.push(`${p}.name: must be PascalCase, letters and digits only`)
+    else if (seen.has(item.name)) errors.push(`${p}.name: ${item.name} is listed twice`)
+    else seen.add(item.name)
+    checkText(item.description, `${p}.description`, 300, errors)
+    if (item.guidance !== undefined) checkText(item.guidance, `${p}.guidance`, 600, errors)
+    if (item.props !== undefined) {
+      if (!Array.isArray(item.props) || item.props.length > 20) return errors.push(`${p}.props: must be a list of at most 20`)
+      item.props.forEach((pr, j) => {
+        const pp = `${p}.props[${j}]`
+        if (!isObject(pr)) return errors.push(`${pp}: must be an object`)
+        unknownKeys(pr, PROP_KEYS, pp, errors)
+        if (typeof pr.name !== 'string' || !PROP_NAME_RE.test(pr.name)) errors.push(`${pp}.name: must be a plain identifier`)
+        checkText(pr.type, `${pp}.type`, 80, errors)
+        if (pr.description !== undefined) checkText(pr.description, `${pp}.description`, 200, errors)
+      })
+    }
+  })
 }
 
 /**
@@ -128,6 +171,8 @@ export function validatePayload(payload) {
     if (t.dark !== undefined) checkVarMap(t.dark, COLOR_VARS, COLOR_RE, 'colour', 'payload.tokens.dark', errors)
     if (t.fonts !== undefined) checkVarMap(t.fonts, FONT_VARS, FONT_RE, 'font stack', 'payload.tokens.fonts', errors)
   }
+
+  if (payload.components !== undefined) checkComponents(payload.components, errors)
 
   return { ok: errors.length === 0, errors }
 }

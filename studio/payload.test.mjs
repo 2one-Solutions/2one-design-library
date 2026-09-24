@@ -16,6 +16,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { validatePayload, TOKEN_VARS, FONT_VARS } from './src/payload/contract.mjs'
 import { payloadToCss } from './src/payload/to-css.mjs'
+import { createLocalStore } from './src/payload/store.mjs'
 import { buildSeedPayload, themeVarsInGlobals, REPO_ROOT } from './src/payload/seed.mjs'
 
 const fails = []
@@ -64,6 +65,18 @@ rejects('a colour variable set on the length rule', { ...seed, tokens: { ...seed
 rejects('a non-object payload', 'nope')
 rejects('a non-object light theme', { ...seed, tokens: { ...seed.tokens, light: 'nope' } })
 
+// ---- client components are data only ----
+const withComponents = (custom) => ({ ...seed, components: { custom } })
+const price = { name: 'PriceTag', description: 'Shows a price with its currency.', props: [{ name: 'amount', type: 'number' }] }
+t('components: a described component validates', validatePayload(withComponents([price])).ok)
+rejects('a component name that is not PascalCase', withComponents([{ ...price, name: 'price tag' }]))
+rejects('a duplicate component name', withComponents([price, price]))
+rejects('markup in a component description', withComponents([{ ...price, description: 'x <script>' }]))
+rejects('code smuggled in as a component field', withComponents([{ ...price, render: '() => alert(1)' }]))
+rejects('a prop with a non-identifier name', withComponents([{ ...price, props: [{ name: 'a b', type: 'number' }] }]))
+rejects('more than the allowed number of components', withComponents(Array.from({ length: 51 }, (_, i) => ({ name: `C${i}`, description: 'x' }))))
+rejects('an unknown components key', { ...seed, components: { builtin: [] } })
+
 // ---- the generator ----
 let css = ''
 try { css = payloadToCss(seed) } catch (e) { fails.push('css: the seed payload could not be converted: ' + e.message) }
@@ -85,6 +98,34 @@ for (const bad of ['body, x', '} a {', '.a b', '']) {
   try { payloadToCss(seed, { scope: bad }) } catch { unsafe = true }
   t(`css: refuses unsafe scope "${bad}"`, unsafe)
 }
+
+// ---- the store ----
+const memoryStorage = () => {
+  const m = new Map()
+  return { getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => m.set(k, v), raw: m }
+}
+const storage = memoryStorage()
+const store = createLocalStore({ seed, storage })
+t('store: starts from the seed', store.load().name === seed.name)
+const renamed = { ...seed, name: 'Acme', brand: { ...seed.brand, name: 'Acme' } }
+t('store: accepts a valid save', store.save(renamed, 'rename').ok && store.load().name === 'Acme')
+t('store: keeps the previous payload in history', store.history()[0]?.payload.name === seed.name && store.history()[0]?.note === 'rename')
+const bad = store.save({ ...renamed, version: 9 })
+t('store: refuses an invalid save and reports why', bad.ok === false && bad.errors.length > 0)
+t('store: an invalid save leaves the current payload untouched', store.load().name === 'Acme')
+t('store: a second store over the same storage sees the save', createLocalStore({ seed, storage }).load().name === 'Acme')
+storage.raw.set('2one-studio-payload', '{not json')
+t('store: corrupt storage falls back instead of throwing', createLocalStore({ seed, storage }).load().name === seed.name)
+storage.raw.set('2one-studio-payload', JSON.stringify({ current: { ...seed, version: 9 }, history: [] }))
+t('store: a stored payload that no longer validates is not trusted', createLocalStore({ seed, storage }).load().name === seed.name)
+const throwing = { getItem() { throw new Error('blocked') }, setItem() { throw new Error('blocked') } }
+const inMemory = createLocalStore({ seed, storage: throwing })
+t('store: blocked storage still works for the session', inMemory.save(renamed).ok && inMemory.load().name === 'Acme')
+store.reset()
+t('store: reset returns to the seed and clears history', store.load().name === seed.name && store.history().length === 0)
+const many = createLocalStore({ seed, storage: memoryStorage() })
+for (let i = 0; i < 30; i++) many.save({ ...seed, name: `n${i}` })
+t('store: history is capped', many.history().length === 20)
 
 if (fails.length) {
   console.error(`\n  ✗ check:studio — ${fails.length} contract(s) broken:\n`)
